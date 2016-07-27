@@ -1,0 +1,26 @@
+{{ define "export_table" }}
+    {{ if eq .has_data true }}
+
+    &nbsp;
+
+    <table id="data" class="ui celled selectable striped compact table">
+        <thead>
+            <tr>
+                <th class="poppy" data-variation="basic" data-content="Timestamp" style="text-align: center;"><i class="blue clock icon"></i></th>
+            </tr>
+        </thead>
+
+        <tfoot>
+        </tfoot>
+
+        <tbody>
+            {{ range $d := .data }}
+            <tr id="summary{{ $d.Id }}">
+                <td>{{ $d.OtherData }}</td>
+            </tr>
+            {{ end }}
+        </tbody>
+    </table>
+
+    {{ end }}
+{{ end }}

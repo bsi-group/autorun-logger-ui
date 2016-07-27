@@ -1,0 +1,4 @@
+.DS_Store
+trace.log
+*.test
+godobin*

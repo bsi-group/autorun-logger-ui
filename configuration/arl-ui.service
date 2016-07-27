@@ -1,0 +1,8 @@
+[Unit]
+Description=ARL-UI
+
+[Service]
+ExecStart=/opt/arl-ui/arl-ui -c /opt/arl-ui/arl-ui.config
+
+[Install]
+WantedBy=multi-user.target

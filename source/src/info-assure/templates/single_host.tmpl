@@ -1,0 +1,65 @@
+{{ define "navbar" }}
+    <div class="ui four item menu">
+        <a class="item" href="/alerts">Alerts</a>
+        <a class="active item" href="/singlehost">Single Host</a>
+        <a class="item" href="/search">Search</a>
+        <a class="item" href="/export">Export</a>
+    </div>
+{{ end }}
+
+{{ define "content" }}
+    <form class="ui form" method="post" name="data_form" id="data_form">
+
+        <div id="no_host_message" class="ui warning small hidden message">
+           <i class="close icon"></i>
+            Host value not entered
+        </div>
+
+        <div class="ui grid">
+            <div class="row">
+                <div class="eight wide column">
+                    <label for="host">Host</label>
+                    <input type="text" class="form-control" name="host" id="host" value="{{ if ne .host "" }}{{ .host }}{{ end}}"/>
+                </div>
+
+                <div class="two wide column">
+                    <label for="search">&nbsp;</label>
+                    <div class="one wide column">
+                        <button id="search" name="search" type="button" class="tiny ui button">Search</button>
+                    </div>
+                </div>
+
+            </div>
+
+            &nbsp;
+        </div>
+
+        {{ template "single_host_table" . }}
+    </form>
+
+    <script type="text/javascript">
+
+        // Allows the user to close 'no ID' message
+        $('#no_host_message .close')
+            .on('click', function() {
+                $(this).parent()
+                    .removeClass('visible')
+                    .addClass('hidden');
+        });
+
+        // Search the link data
+        $("#search").click(function() {
+
+            var host = document.getElementById("host").value
+
+            if (host.length == 0) {
+                $('#no_host_message').addClass('visible')
+                $('#no_host_message').removeClass('hidden')
+                return
+            }
+
+            $("#data_form").submit();
+        });
+
+    </script>
+{{ end }}

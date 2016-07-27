@@ -1,0 +1,55 @@
+{{ define "navbar" }}
+    <div class="ui four item menu">
+        <a class="active item" href="/alerts">Alerts</a>
+        <a class="item" href="/singlehost">Single Host</a>
+        <a class="item" href="/search">Search</a>
+        <a class="item" href="/export">Export</a>
+    </div>
+{{ end }}
+
+{{ define "content" }}
+    <form class="ui form" method="post" name="events_form" id="data_form">
+        <input type="hidden" name="current_page_num" id="current_page_num" value="{{ .current_page_num }}"/>
+
+        {{ template "alerts_table" . }}
+    </form>
+
+    <script type="text/javascript">
+
+        // Show/hide the child data rows
+        $(".toggler").click(function(e){
+            e.preventDefault();
+            $('.child'+$(this).attr('other-data')).toggle();
+        });
+
+        // When the top "records" drop down changes, submit the HTML form so
+        // that the data set is refreshed from the beginning with the new records value
+        $("#num_recs_per_page").change(function(){
+            var input = $("<input>").attr("type", "hidden").attr("name", "mode").val('first');
+            $('#data_form').append($(input));
+            $("#data_form").submit();
+        });
+
+        // When the bottom "records" drop down changes the set the top "records" drop down to the same value
+        // Then submit the HTML form so that the data set is refreshed from the beginning with the new records value
+        $("#num_recs_per_page_bottom").change(function(){
+            $("#num_recs_per_page").val($(this).val());
+            var input = $("<input>").attr("type", "hidden").attr("name", "mode").val('first');
+            $('#data_form').append($(input));
+            $("#data_form").submit();
+        });
+
+        $( document ).ready(function() {
+
+            // Setup the popup's
+            $('.poppy')
+                .popup()
+            ;
+
+            // Select the initial "records" value within the drop down's
+            $('#num_recs_per_page').val('{{ .num_recs_per_page }}');
+            $('#num_recs_per_page_bottom').val('{{ .num_recs_per_page }}');
+        });
+
+    </script>
+{{ end }}

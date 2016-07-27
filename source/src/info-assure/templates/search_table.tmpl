@@ -1,0 +1,48 @@
+{{ define "search_table" }}
+    {{ if eq .has_data true }}
+
+        {{ template "buttons_top" . }}
+
+        <table id="data" class="ui celled selectable striped compact table">
+            <thead>
+                <tr>
+                    <th>Domain</th>
+                    <th class="poppy" data-variation="basic" data-content="Host" style="text-align: center;"><i class="blue desktop icon"></i></th>
+                    <th class="poppy" data-variation="basic" data-content="Timestamp" style="text-align: center;"><i class="blue clock icon"></i></th>
+                    <th>Location</th>
+                    <th>Name</th>
+                    <th>Profile</th>
+                </tr>
+            </thead>
+
+            <tfoot>
+            </tfoot>
+
+            <tbody>
+                {{ range $d := .data }}
+                <tr id="parent{{ $d.Id }}">
+                    <td>{{ $d.Domain }}</td>
+                    <td>{{ $d.Host }}</td>
+                    <td>{{ $d.UtcTimeStr }}</td>
+                    <td>{{ $d.Location }}</td>
+                    <td>{{ $d.ItemName }}</td>
+                    <td style="word-wrap: break-word"><a href="#" class="toggler" other-data="{{ $d.Id }}">{{ $d.Profile }}</a></td>
+                </tr>
+                <tr class="child{{ $d.Id }}" style="display:none">
+                    <td colspan=8>{{ $d.OtherData }}</td>
+                </tr>
+                {{ end }}
+            </tbody>
+        </table>
+
+        {{ template "buttons_bottom" . }}
+    {{ end }}
+
+    <script type="text/javascript">
+        // Show/hide the child data rows
+        $(".toggler").click(function(e){
+            e.preventDefault();
+            $('.child'+$(this).attr('other-data')).toggle();
+        });
+    </script>
+{{ end }}

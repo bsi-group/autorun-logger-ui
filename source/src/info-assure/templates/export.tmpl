@@ -1,0 +1,79 @@
+{{ define "navbar" }}
+    <div class="ui four item menu">
+        <a class="item" href="/alerts">Alerts</a>
+        <a class="item" href="/singlehost">Single Host</a>
+        <a class="item" href="/search">Search</a>
+        <a class="active item" href="/export">Export</a>
+    </div>
+{{ end }}
+
+{{ define "content" }}
+    <form class="ui form" method="post" name="export_form" id="export_form">
+
+        <div id="no_type_message" class="ui warning small hidden message">
+            <i class="close icon"></i>
+            Type not selected
+        </div>
+
+        <div class="ui grid">
+            <div class="row">
+                <div class="six wide column">
+                    <label for="export_type">Type</label>
+                    <select class="form-control" name="export_type" id="export_type">
+                        <option value="0" {{ if eq .export_type 0 }}selected{{ end }} ></option>
+                        <option value="1" {{ if eq .export_type 1 }}selected{{ end }} >SHA256</option>
+                        <option value="2" {{ if eq .export_type 2 }}selected{{ end }} >MD5</option>
+                        <option value="3" {{ if eq .export_type 3 }}selected{{ end }} >Domains</option>
+                        <option value="4" {{ if eq .export_type 4 }}selected{{ end }} >Hosts</option>
+                    </select>
+                </div>
+
+                <div class="two wide column">
+                    <label for="search">&nbsp;</label>
+                    <div class="one wide column">
+                        <button id="search" name="search" type="button" class="tiny ui button">Search</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{ template "export_table" . }}
+    </form>
+
+    <script type="text/javascript">
+
+        // Allows the user to close 'no type' message
+        $('#no_type_message .close')
+            .on('click', function() {
+                $(this).parent()
+                    .removeClass('visible')
+                    .addClass('hidden');
+        });
+
+        $('.ui.dropdown')
+            .dropdown()
+        ;
+
+        // Search the link data
+        $("#search").click(function() {
+
+            var exportType = document.getElementById("export_type").value
+            if (exportType == 0) {
+                $('#no_type_message').addClass('visible')
+                $('#no_type_message').removeClass('hidden')
+                return
+            }
+
+            $("#export_form").submit();
+        });
+
+        $( document ).ready(function() {
+
+            // Setup the popup's
+            $('.poppy')
+                .popup()
+            ;
+        });
+
+    </script>
+{{ end }}

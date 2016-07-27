@@ -1,0 +1,27 @@
+table thead tr th {
+    font-size: small;
+}
+
+table tr td {
+    font-size: small;
+}
+
+label {
+    font-size: 0.8rem
+}
+
+select {
+    font-size: small;
+}
+
+body {
+    lineheight: 10px;
+}
+
+input {
+    height: 35px !important;
+}
+
+select {
+    height: 35px !important;
+}

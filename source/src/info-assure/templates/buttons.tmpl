@@ -1,0 +1,73 @@
+{{ define "buttons_top" }}
+    <div class="ui grid">
+        <div class="twelve wide column">
+            <div class="ui buttons">
+                {{ if eq .current_page_num 0 }}
+                    <button id="first" name="mode" type="submit" class="ui button" value="first">First</button>
+                    <button id="previous" name="previous" type="submit" class="ui button" disabled>Previous</button>
+                {{ else }}
+                    <button id="first" name="mode" type="submit" class="ui button" value="first">First</button>
+                    <button id="previous" name="mode" type="submit" class="ui button" value="previous">Previous</button>
+                {{ end }}
+
+                {{ if .no_more_records }}
+                    <button id="next" name="mode" type="submit" class="ui button" disabled>Next</button>
+                {{ else }}
+                    <button id="next" name="mode" type="submit" class="ui button" value="next">Next</button>
+                {{ end }}
+            </div>
+        </div>
+
+        <div class="right aligned four wide column">
+            <div class="inline field">
+                <label for="num_recs_per_page">Records Per Page</label>
+                <select class="field" name="num_recs_per_page" id="num_recs_per_page" value="{{ .num_recs_per_page }}">
+                    <option value="10">10</option>
+                    <option value="20">20</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                    <option value="200">200</option>
+                    <option value="500">500</option>
+                    <option value="1000">1000</option>
+                </select>
+            </div>
+        </div>
+    </div>
+{{ end }}
+
+{{ define "buttons_bottom" }}
+    <div class="ui grid">
+        <div class="twelve wide column">
+            <div class="ui buttons">
+                {{ if eq .current_page_num 0 }}
+                    <button id="first" name="mode" type="submit" class="ui button" value="first">First</button>
+                    <button id="previous" name="previous" type="submit" class="ui button" disabled>Previous</button>
+                {{ else }}
+                    <button id="first" name="mode" type="submit" class="ui button" value="first">First</button>
+                    <button id="previous" name="mode" type="submit" class="ui button" value="previous">Previous</button>
+                {{ end }}
+
+                {{ if .no_more_records }}
+                    <button id="next" name="mode" type="submit" class="ui button" disabled>Next</button>
+                {{ else }}
+                    <button id="next" name="mode" type="submit" class="ui button" value="next">Next</button>
+                {{ end }}
+            </div>
+        </div>
+
+        <div class="right aligned four wide column">
+            <div class="inline field">
+                <label for="num_recs_per_page_bottom">Records Per Page</label>
+                <select class="field" name="num_recs_per_page_bottom" id="num_recs_per_page_bottom" value="{{ .num_recs_per_page }}">
+                    <option value="10">10</option>
+                    <option value="20">20</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                    <option value="200">200</option>
+                    <option value="500">500</option>
+                    <option value="1000">1000</option>
+                </select>
+            </div>
+        </div>
+    </div>
+{{ end }}

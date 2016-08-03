@@ -145,14 +145,18 @@ func getAutorunsForSingleHost(host string) (bool, []*Alert) {
 	err := db.
 		Select(`id, domain, host`).
 		From("instance").
-		Where("instance.host = $1", host).
+		Where("LOWER(instance.host) = LOWER($1)", host).
 		Limit(1).
 		OrderBy("timestamp DESC").
 		QueryStruct(&i)
 
 	if err != nil {
-		logger.Errorf("Error querying for a hosts instance: %v", err)
-		return true, data
+		if strings.Contains(err.Error(), "no rows in result set") == true {
+			return false, data
+		} else {
+			logger.Errorf("Error querying for a hosts instance: %v", err)
+			return true, data
+		}
 	}
 
 	err = db.
@@ -163,8 +167,12 @@ func getAutorunsForSingleHost(host string) (bool, []*Alert) {
 		QueryStructs(&data)
 
 	if err != nil {
-		logger.Errorf("Error querying for a hosts autoruns: %v", err)
-		return true, data
+		if strings.Contains(err.Error(), "no rows in result set") == true {
+			return false, data
+		} else {
+			logger.Errorf("Error querying for a hosts instance: %v", err)
+			return true, data
+		}
 	}
 
 	// Perform some cleaning of the data, so that it displays better in the HTML

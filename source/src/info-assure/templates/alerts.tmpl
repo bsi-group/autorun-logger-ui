@@ -17,9 +17,15 @@
     <script type="text/javascript">
 
         // Show/hide the child data rows
-        $(".toggler").click(function(e){
+        $(".togglerText").click(function(e){
             e.preventDefault();
-            $('.child'+$(this).attr('other-data')).toggle();
+            $('.childText'+$(this).attr('other-data')).toggle();
+        });
+
+        // Show/hide the child data rows
+        $(".togglerLinked").click(function(e){
+            e.preventDefault();
+            $('.childLinked'+$(this).attr('other-data')).toggle();
         });
 
         // When the top "records" drop down changes, submit the HTML form so

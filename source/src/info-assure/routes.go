@@ -5,9 +5,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"html/template"
-	"fmt"
 	"path"
 	"strings"
+	"fmt"
 )
 
 //
@@ -65,7 +65,7 @@ func getAlerts(numRecsPerPage int, currentPageNumber int) (bool, bool, []*Alert)
 
 	err := db.
 		Select(`id, instance, domain, host, "timestamp", autorun_id, location, item_name, enabled, profile,
-launch_string, description, company, signer, version_number, file_path, file_name, file_directory, "time", sha256, md5`).
+launch_string, description, company, signer, version_number, file_path, file_name, file_directory, "time", sha256, md5, text, linked`).
 		From("alert").
 		OrderBy("timestamp DESC").
 		Offset(uint64(numRecsPerPage * currentPageNumber)).
@@ -81,18 +81,14 @@ launch_string, description, company, signer, version_number, file_path, file_nam
 	for _, v := range data {
         v.LocationStr = template.HTML("<td class=\"poppy\" data-variation=\"basic\" data-content=\"" + v.Location + "\">" + splitRegKey(v.Location) + "</td>")
 		v.UtcTimeStr = v.UtcTime.Format("15:04:05 02/01/2006")
-		v.OtherData = template.HTML(fmt.Sprintf(
-`<strong>File Path:</strong> %s<br>
-<strong>Launch String:</strong> %s<br>
-<strong>Enabled:</strong> %t<br>
-<strong>Description:</strong> %s<br>
-<strong>Company:</strong> %s<br>
-<strong>Signer:</strong> %s<br>
-<strong>Version:</strong> %s<br>
-<strong>Time:</strong> %s<br>
-<strong>SHA256:</strong> %s<br>
-<strong>MD5:</strong> %s<br>`,
-			v.FilePath, v.LaunchString, v.Enabled, v.Description, v.Company, v.Signer, v.VersionNumber, v.Time, v.Sha256, v.Md5))
+		v.TextStr = template.HTML(v.Text)
+		v.LinkedStr = template.HTML(v.Linked)
+
+		if len(v.Linked) > 0 {
+			v.LinkedColumn = template.HTML("<td style=\"text-align:center\"><a href=\"#\" class=\"togglerLinked\" other-data=\"" + util.ConvertInt64ToString(v.Id) + "\"><i class=\"checkmark icon\"></i></a></td>")
+		} else {
+			v.LinkedColumn = template.HTML("<td></td>")
+		}
 	}
 
 	noMoreRecords := false
@@ -179,21 +175,8 @@ func getAutorunsForSingleHost(host string) (bool, []*Alert) {
 	for _, v := range data {
 		v.LocationStr = template.HTML("<td class=\"poppy\" data-variation=\"basic\" data-content=\"" + v.Location + "\">" + splitRegKey(v.Location) + "</td>")
 		v.TimeStr = v.Time.Format("15:04:05 02/01/2006")
-		v.OtherData = template.HTML(fmt.Sprintf(
-			`<strong>Domain:</strong> %s<br>
-			<strong>Host:</strong> %s<br>
-			<strong>Location:</strong> %s<br>
-			<strong>File Path:</strong> %s<br>
-			<strong>Launch String:</strong> %s<br>
-			<strong>Enabled:</strong> %t<br>
-			<strong>Description:</strong> %s<br>
-			<strong>Company:</strong> %s<br>
-			<strong>Signer:</strong> %s<br>
-			<strong>Version:</strong> %s<br>
-			<strong>Time:</strong> %s<br>
-			<strong>SHA256:</strong> %s<br>
-			<strong>MD5:</strong> %s<br>`,
-			i.Domain, i.Host, v.Location, v.FilePath, v.LaunchString, v.Enabled, v.Description, v.Company, v.Signer, v.VersionNumber, v.Time, v.Sha256, v.Md5))
+		v.TextStr = template.HTML(v.Text)
+		v.LinkedStr = template.HTML(v.Linked)
 	}
 
 	return false, data
@@ -352,7 +335,7 @@ func getSearch(
 	// Perform some cleaning of the data, so that it displays better in the HTML
 	for _, v := range data {
 		v.UtcTimeStr = v.Time.Format("15:04:05 02/01/2006")
-		v.OtherData = template.HTML(fmt.Sprintf(
+		v.TextStr = template.HTML(fmt.Sprintf(
 			`<strong>File Path:</strong> %s<br>
 			<strong>Launch String:</strong> %s<br>
 			<strong>Enabled:</strong> %t<br>

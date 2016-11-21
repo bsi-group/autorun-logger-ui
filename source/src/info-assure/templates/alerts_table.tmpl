@@ -10,6 +10,7 @@
                 <th>Location</th>
                 <th>Name</th>
                 <th>Profile</th>
+                <th>Linked</th>
             </tr>
         </thead>
 
@@ -24,10 +25,14 @@
                 <td>{{ $d.UtcTimeStr }}</td>
                 {{ $d.LocationStr }}
                 <td style="word-wrap: break-word">{{ $d.ItemName }}</td>
-                <td style="word-wrap: break-word"><a href="#" class="toggler" other-data="{{ $d.Id }}">{{ $d.Profile }}</a></td>
+                <td>{{ $d.Profile }}</td>
+                {{ $d.LinkedColumn }}
             </tr>
-            <tr class="child{{ $d.Id }}" style="display:none">
-                <td colspan=8>{{ $d.OtherData }}</td>
+            <tr>
+                <td colspan=7>{{ $d.TextStr }}</td>
+            </tr>
+            <tr class="childLinked{{ $d.Id }}" style="display:none">
+                <td colspan=7>{{ $d.LinkedStr }}</td>
             </tr>
             {{ end }}
         </tbody>

@@ -14,6 +14,7 @@ import (
 	"path/filepath"
 	"database/sql"
 	"time"
+	"log"
 )
 
 // ##### Variables ###########################################################
@@ -22,13 +23,14 @@ var (
 	logger 	*logging.Logger
 	config  *Config
 	db		*runner.DB
+	users	map[string]User
 )
 
 // ##### Constants ###########################################################
 
 const APP_TITLE string = "AutoRun Logger UI"
 const APP_NAME = "arl-ui"
-const APP_VERSION = "0.0.1"
+const APP_VERSION = "1.0.3"
 
 // ##### Methods #############################################################
 
@@ -39,19 +41,34 @@ func main() {
 
 	opt := struct {
 		ConfigFile	string        	`goptions:"-c, --config, description='Config file path'"`
+		UsersFile	string        	`goptions:"-u, --users, description='User file path'"`
 		Help       	goptions.Help	`goptions:"-h, --help, description='Show this help'"`
 	}{ // Default values
 		ConfigFile: "./" + APP_NAME + ".config",
+		UsersFile: "./users.config",
 	}
 
 	goptions.ParseAndFail(&opt)
 
 	loadConfig(opt.ConfigFile)
+	loadUsers(opt.UsersFile)
+
 	initialiseDatabase()
 	setupHttpServer()
 }
 
 func setupHttpServer() {
+
+	// Define the user accounts in a username:password map that
+	// can be used with the BasicAuth gin-gonic middleware
+	tmpAccounts := make(gin.Accounts)
+	for _, u := range users {
+		tmpAccounts[u.UserName] = u.Password
+		if len(u.Password) == 0 {
+			logger.Fatalf("User configured without a password defined: %s", u.UserName)
+		}
+	}
+
 	logger.Info("HTTP API server running: " + config.HttpIp + ":" + fmt.Sprintf("%d", config.HttpPort))
 	var r *gin.Engine
 	if config.Debug == true {
@@ -66,16 +83,20 @@ func setupHttpServer() {
 	r.HTMLRender = loadTemplates(config.TemplateDir)
 	r.Static("/static", config.StaticDir)
 
-	r.GET("/", routeIndex)
-	r.GET("/alerts",routeAlerts)
-	r.POST("/alerts", routeAlerts)
-	r.GET("/singlehost", routeSingleHost)
-	r.POST("/singlehost", routeSingleHost)
-	r.GET("/search", routeSearch)
-	r.POST("/search", routeSearch)
-    r.GET("/export", routeExport)
-    r.POST("/export", routeExport)
-    r.GET("/export/:id", routeExportData) // Download
+	// Group using gin.BasicAuth() middleware
+	// gin.Accounts is a shortcut for map[string]string
+	authorized := r.Group("/", gin.BasicAuth(tmpAccounts))
+
+	authorized.GET("/", routeIndex)
+	authorized.GET("/alerts",routeAlerts)
+	authorized.POST("/alerts", routeAlerts)
+	authorized.GET("/singlehost", routeSingleHost)
+	authorized.POST("/singlehost", routeSingleHost)
+	authorized.GET("/search", routeSearch)
+	authorized.POST("/search", routeSearch)
+	authorized.GET("/export", routeExport)
+	authorized.POST("/export", routeExport)
+	authorized.GET("/export/:id", routeExportData) // Download
 
 	r.Run(config.HttpIp + ":" + fmt.Sprintf("%d", config.HttpPort))
 }
@@ -158,6 +179,25 @@ func loadConfig(configPath string) {
 
 	if len(config.ExportDir) == 0 {
 		logger.Fatal("Export dir not set in config file")
+	}
+}
+
+// Loads the config file contents (yaml) and marshals to a struct
+func loadUsers(configPath string)  {
+	temp := new(Users)
+	data, err := util.ReadTextFromFile(configPath)
+	if err != nil {
+		log.Fatalf("Error reading the users config file: %v", err)
+	}
+
+	err = yaml.Unmarshal([]byte(data), &temp)
+	if err != nil {
+		log.Fatalf("Error unmarshalling the users config file: %v", err)
+	}
+
+	users = make(map[string]User)
+	for _, u := range temp.Data {
+		users[u.UserName] = u
 	}
 }
 

@@ -41,7 +41,7 @@ func main() {
 
 	opt := struct {
 		ConfigFile	string        	`goptions:"-c, --config, description='Config file path'"`
-		UsersFile	string        	`goptions:"-u, --users, description='User file path'"`
+		UsersFile	string        	`goptions:"-u, --users, description='Users file path'"`
 		Help       	goptions.Help	`goptions:"-h, --help, description='Show this help'"`
 	}{ // Default values
 		ConfigFile: "./" + APP_NAME + ".config",

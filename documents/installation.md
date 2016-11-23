@@ -16,6 +16,11 @@ sudo mkdir /var/log/arl-ui
 sudo chown YOURUSER /var/log/arl-ui
 ```
 
+## Authentication
+The HTTP server uses Basic Authentication as a simple method to enforce access control.
+
+The user configuration is controlled by the **users.config** file located within the application directory. The initial file contains the **arl** user, which requires a password to be set as the applications validation will prevent the application from running.
+
 ## Systemd Service
 
 To enable the AutoRun UI server to run on boot up, a Systemd service must be created. The following instructions detail the steps required. The instructions show the installation into the **/opt** directory.

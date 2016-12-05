@@ -1,29 +1,29 @@
 package main
 
 import (
-	"github.com/voxelbrain/goptions"
-	"github.com/op/go-logging"
-	"github.com/gin-gonic/gin"
+	"database/sql"
+	"fmt"
 	"github.com/gin-gonic/contrib/renders/multitemplate"
+	"github.com/gin-gonic/gin"
+	"github.com/op/go-logging"
+	"github.com/voxelbrain/goptions"
+	util "github.com/woanware/goutil"
 	"gopkg.in/mgutz/dat.v1"
 	"gopkg.in/mgutz/dat.v1/sqlx-runner"
-	util "github.com/woanware/goutil"
 	"gopkg.in/yaml.v2"
-	"fmt"
+	"log"
 	"os"
 	"path/filepath"
-	"database/sql"
 	"time"
-	"log"
 )
 
 // ##### Variables ###########################################################
 
 var (
-	logger 	*logging.Logger
-	config  *Config
-	db		*runner.DB
-	users	map[string]User
+	logger *logging.Logger
+	config *Config
+	db     *runner.DB
+	users  map[string]User
 )
 
 // ##### Constants ###########################################################
@@ -40,12 +40,12 @@ func main() {
 	initialiseLogging()
 
 	opt := struct {
-		ConfigFile	string        	`goptions:"-c, --config, description='Config file path'"`
-		UsersFile	string        	`goptions:"-u, --users, description='Users file path'"`
-		Help       	goptions.Help	`goptions:"-h, --help, description='Show this help'"`
+		ConfigFile string        `goptions:"-c, --config, description='Config file path'"`
+		UsersFile  string        `goptions:"-u, --users, description='Users file path'"`
+		Help       goptions.Help `goptions:"-h, --help, description='Show this help'"`
 	}{ // Default values
 		ConfigFile: "./" + APP_NAME + ".config",
-		UsersFile: "./users.config",
+		UsersFile:  "./users.config",
 	}
 
 	goptions.ParseAndFail(&opt)
@@ -88,8 +88,10 @@ func setupHttpServer() {
 	authorized := r.Group("/", gin.BasicAuth(tmpAccounts))
 
 	authorized.GET("/", routeIndex)
-	authorized.GET("/alerts",routeAlerts)
+	authorized.GET("/alerts", routeAlerts)
 	authorized.POST("/alerts", routeAlerts)
+	authorized.GET("/classified", routeClassified)
+	authorized.POST("/classified", routeClassified)
 	authorized.GET("/singlehost", routeSingleHost)
 	authorized.POST("/singlehost", routeSingleHost)
 	authorized.GET("/search", routeSearch)
@@ -134,7 +136,7 @@ func initialiseDatabase() {
 
 // Loads the config file contents (yaml) and marshals to a struct
 func loadConfig(configPath string) {
-	config =  new(Config)
+	config = new(Config)
 	data, err := util.ReadTextFromFile(configPath)
 	if err != nil {
 		logger.Fatalf("Error reading the config file: %v", err)
@@ -183,7 +185,7 @@ func loadConfig(configPath string) {
 }
 
 // Loads the config file contents (yaml) and marshals to a struct
-func loadUsers(configPath string)  {
+func loadUsers(configPath string) {
 	temp := new(Users)
 	data, err := util.ReadTextFromFile(configPath)
 	if err != nil {
@@ -222,21 +224,21 @@ func initialiseLogging() {
 	f.Close()
 
 	// Define the /var/log file
-	logFile, err := os.OpenFile("/var/log/" + APP_NAME + "/log.txt", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	logFile, err := os.OpenFile("/var/log/"+APP_NAME+"/log.txt", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 	if err != nil {
 		logger.Fatalf("Error opening the log file: %v", err)
 	}
 
 	// Define the StdOut logging
 	backendStdOut := logging.NewLogBackend(os.Stdout, "", 0)
-	formatStdOut:= logging.MustStringFormatter(
-		"%{color}%{time:2006-01-02T15:04:05.000} %{color:reset} %{message}",)
+	formatStdOut := logging.MustStringFormatter(
+		"%{color}%{time:2006-01-02T15:04:05.000} %{color:reset} %{message}")
 	formatterStdOut := logging.NewBackendFormatter(backendStdOut, formatStdOut)
 
 	// Define the /var/log logging
 	backendFile := logging.NewLogBackend(logFile, "", 0)
-	formatFile:= logging.MustStringFormatter(
-		"%{time:2006-01-02T15:04:05.000} %{level:.4s} %{message}",)
+	formatFile := logging.MustStringFormatter(
+		"%{time:2006-01-02T15:04:05.000} %{level:.4s} %{message}")
 	formatterFile := logging.NewBackendFormatter(backendFile, formatFile)
 
 	logging.SetBackend(formatterStdOut, formatterFile)
@@ -252,6 +254,9 @@ func loadTemplates(templatesDir string) multitemplate.Render {
 	r.AddFromFiles("alerts",
 		filepath.Join(templatesDir, "base.tmpl"), filepath.Join(templatesDir, "alerts.tmpl"),
 		filepath.Join(templatesDir, "buttons.tmpl"), filepath.Join(templatesDir, "alerts_table.tmpl"))
+	r.AddFromFiles("classified",
+		filepath.Join(templatesDir, "base.tmpl"), filepath.Join(templatesDir, "classified.tmpl"),
+		filepath.Join(templatesDir, "classified_buttons.tmpl"), filepath.Join(templatesDir, "classified_table.tmpl"))
 	r.AddFromFiles("single_host",
 		filepath.Join(templatesDir, "base.tmpl"), filepath.Join(templatesDir, "single_host.tmpl"),
 		filepath.Join(templatesDir, "buttons.tmpl"), filepath.Join(templatesDir, "single_host_table.tmpl"))

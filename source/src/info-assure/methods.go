@@ -53,12 +53,12 @@ func processCurrentPageNumber(data string, mode string) (int) {
 	}
 
 	if mode == "next" {
-		currentPageNumber += 1
+		currentPageNumber++
 		return currentPageNumber
 	}
 
 	if mode == "previous" {
-		currentPageNumber -= 1
+		currentPageNumber--
 		return currentPageNumber
 	}
 

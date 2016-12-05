@@ -1,6 +1,6 @@
-{{ define "buttons_top" }}
+{{ define "classified_buttons_top" }}
     <div class="ui grid">
-        <div class="eight wide column">
+        <div class="twelve wide column">
             <div class="ui buttons">
                 {{ if eq .current_page_num 0 }}
                     <button id="first" name="mode" type="submit" class="ui button" value="first">First</button>
@@ -15,19 +15,7 @@
                 {{ else }}
                     <button id="next" name="mode" type="submit" class="ui button" value="next">Next</button>
                 {{ end }}
-                <button id="classify" name="mode" type="button" class="ui button" value="classify">Classify</button>
-            </div>
-        </div>
-
-        <div class="four wide column">
-            <div class="inline field">
-                <label for="verified">Verified</label>
-                <select class="field" name="verified" id="verified" value="{{ .verified }}">
-                    <option value="0">All</option>
-                    <option value="1">Verified</option>
-                    <option value="2">Unverified</option>
-                    <option value="3">Verified (Microsoft)</option>
-                </select>
+                <button id="unclassify" name="mode" type="button" class="ui button" value="unclassify">Unclassify</button>
             </div>
         </div>
 
@@ -48,9 +36,9 @@
     </div>
 {{ end }}
 
-{{ define "buttons_bottom" }}
+{{ define "classified_buttons_bottom" }}
     <div class="ui grid">
-        <div class="eight wide column">
+        <div class="twelve wide column">
             <div class="ui buttons">
                 {{ if eq .current_page_num 0 }}
                     <button id="first" name="mode" type="submit" class="ui button" value="first">First</button>
@@ -65,19 +53,7 @@
                 {{ else }}
                     <button id="next" name="mode" type="submit" class="ui button" value="next">Next</button>
                 {{ end }}
-                <button id="classify" name="mode" type="button" class="ui button" value="classify">Classify</button>
-            </div>
-        </div>
-
-         <div class="four wide column">
-            <div class="inline field">
-                <label for="verified_bottom">Verified</label>
-                <select class="field" name="verified_bottom" id="verified_bottom" value="{{ .verified }}">
-                    <option value="0">All</option>
-                    <option value="1">Verified</option>
-                    <option value="2">Unverified</option>
-                    <option value="3">Verified (Microsoft)</option>
-                </select>
+                <button id="unclassify" name="mode" type="button" class="ui button" value="unclassify">Unclassify</button>
             </div>
         </div>
 

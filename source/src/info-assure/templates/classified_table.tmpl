@@ -1,5 +1,5 @@
-{{ define "alerts_table" }}
-    {{ template "buttons_top" . }}
+{{ define "classified_table" }}
+    {{ template "classified_buttons_top" . }}
 
     <table id="data" class="ui celled selectable striped compact table">
         <thead>
@@ -12,6 +12,7 @@
                 <th>Name</th>
                 <th>Profile</th>
                 <th>Linked</th>
+                <th>Classified By</th>
             </tr>
         </thead>
 
@@ -29,16 +30,17 @@
                 <td style="word-wrap: break-word">{{ $d.ItemName }}</td>
                 <td>{{ $d.Profile }}</td>
                 {{ $d.LinkedColumn }}
+                <td>{{ $d.ClassifiedBy }}</td>
             </tr>
             <tr>
-                <td colspan=8>{{ $d.TextStr }}</td>
+                <td colspan=9>{{ $d.TextStr }}</td>
             </tr>
             <tr class="childLinked{{ $d.Id }}" style="display:none">
-                <td colspan=8>{{ $d.LinkedStr }}</td>
+                <td colspan=9>{{ $d.LinkedStr }}</td>
             </tr>
             {{ end }}
         </tbody>
     </table>
 
-    {{ template "buttons_bottom" . }}
+    {{ template "classified_buttons_bottom" . }}
 {{ end }}

@@ -30,7 +30,7 @@ var (
 
 const APP_TITLE string = "AutoRun Logger UI"
 const APP_NAME = "arl-ui"
-const APP_VERSION = "1.0.3"
+const APP_VERSION = "1.0.5"
 
 // ##### Methods #############################################################
 

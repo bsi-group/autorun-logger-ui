@@ -11,20 +11,36 @@ import (
 	"time"
 )
 
-const SQL_ALERTS_UNCLASSIFIED string = `SELECT * FROM alert JOIN (SELECT alert.id FROM alert
-LEFT JOIN classification ON (classification.alert_id = alert.id)
-WHERE classification.id IS NULL ORDER BY alert.timestamp LIMIT $1 OFFSET $2) AS a ON a.id = alert.id`
+const SQL_ALERTS_UNCLASSIFIED string = 
+	`SELECT * 
+	   FROM alert 
+	   JOIN (SELECT alert.id FROM alert
+  LEFT JOIN classification ON (classification.alert_id = alert.id)
+      WHERE classification.id IS NULL
+      LIMIT $1 
+	 OFFSET $2) AS a ON a.id = alert.id
+   ORDER BY alert.timestamp`
 
-const SQL_ALERTS_UNCLASSIFIED_FILTERED string = `SELECT * FROM alert JOIN (SELECT alert.id FROM alert
-LEFT JOIN classification ON (classification.alert_id = alert.id)
-WHERE classification.id IS NULL AND alert.verified = $3 ORDER BY alert.timestamp LIMIT $1 OFFSET $2) AS a ON a.id = alert.id`
+const SQL_ALERTS_UNCLASSIFIED_FILTERED string = 
+	`SELECT * 
+	   FROM alert 
+	   JOIN (SELECT alert.id FROM alert
+  LEFT JOIN classification ON (classification.alert_id = alert.id)
+      WHERE classification.id IS NULL AND alert.verified = $3
+      LIMIT $1 
+	 OFFSET $2) AS a ON a.id = alert.id
+   ORDER BY alert.timestamp`
 
-const SQL_ALERTS_CLASSIFIED string = `SELECT alert.*, 
-classification.user_name as classified_by, classification.timestamp as classified FROM alert
-LEFT JOIN classification ON (classification.alert_id = alert.id)
-JOIN (SELECT alert.id FROM alert
-LEFT JOIN classification ON (classification.alert_id = alert.id)
-WHERE classification.id IS NOT NULL ORDER BY alert.timestamp LIMIT $1 OFFSET $2) AS a ON a.id = alert.id`
+const SQL_ALERTS_CLASSIFIED string = 
+    `SELECT alert.*, classification.user_name as classified_by, classification.timestamp as classified 
+	   FROM alert
+  LEFT JOIN classification ON (classification.alert_id = alert.id)
+       JOIN (SELECT alert.id FROM alert
+  LEFT JOIN classification ON (classification.alert_id = alert.id)
+      WHERE classification.id IS NOT NULL
+      LIMIT $1 
+	 OFFSET $2) AS a ON a.id = alert.id
+   ORDER BY alert.timestamp `
 
 //
 func routeIndex(c *gin.Context) {
@@ -116,29 +132,8 @@ func getAlerts(numRecsPerPage int, currentPageNumber int, verified int) (bool, b
 
 	if verified == VERIFIED_ALL {
 		err = db.SQL(SQL_ALERTS_UNCLASSIFIED, numRecsPerPage+1, numRecsPerPage*currentPageNumber).QueryStructs(&data)
-
-		// err = db.
-		// 	Select(`id, instance, domain, host, "timestamp", autorun_id, location, item_name,
-		// 			enabled, profile, launch_string, description, company, signer, version_number,
-		// 			file_path, file_name, file_directory, "time", sha256, md5, text, linked`).
-		// 	From("alert").
-		// 	OrderBy("timestamp DESC").
-		// 	Offset(uint64(numRecsPerPage * currentPageNumber)).
-		// 	Limit(uint64(numRecsPerPage + 1)).
-		// 	QueryStructs(&data)
 	} else {
 		err = db.SQL(SQL_ALERTS_UNCLASSIFIED_FILTERED, numRecsPerPage+1, numRecsPerPage*currentPageNumber, verified).QueryStructs(&data)
-
-		// err = db.
-		// 	Select(`id, instance, domain, host, "timestamp", autorun_id, location, item_name,
-		// 			enabled, profile, launch_string, description, company, signer, version_number,
-		// 			file_path, file_name, file_directory, "time", sha256, md5, text, linked`).
-		// 	From("alert").
-		// 	Where("verified = $1", verified).
-		// 	OrderBy("timestamp DESC").
-		// 	Offset(uint64(numRecsPerPage * currentPageNumber)).
-		// 	Limit(uint64(numRecsPerPage + 1)).
-		// 	QueryStructs(&data)
 	}
 
 	if err != nil {

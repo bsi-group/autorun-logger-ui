@@ -2,19 +2,21 @@ package main
 
 import (
 	"database/sql"
+	"encoding/gob"
 	"fmt"
-	"github.com/gin-gonic/contrib/renders/multitemplate"
-	"github.com/gin-gonic/gin"
-	"github.com/op/go-logging"
-	"github.com/voxelbrain/goptions"
-	util "github.com/woanware/goutil"
-	"gopkg.in/mgutz/dat.v1"
-	"gopkg.in/mgutz/dat.v1/sqlx-runner"
-	"gopkg.in/yaml.v2"
 	"log"
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/gin-gonic/contrib/renders/multitemplate"
+	"github.com/gin-gonic/gin"
+	"github.com/gorilla/sessions"
+	"github.com/op/go-logging"
+	"github.com/voxelbrain/goptions"
+	util "github.com/woanware/goutil"
+	"gopkg.in/mgutz/dat.v1"
+	"gopkg.in/yaml.v2"
 )
 
 // ##### Variables ###########################################################
@@ -24,6 +26,7 @@ var (
 	config *Config
 	db     *runner.DB
 	users  map[string]User
+	Store  *sessions.FilesystemStore
 )
 
 // ##### Constants ###########################################################
@@ -34,7 +37,14 @@ const APP_VERSION = "1.0.5"
 
 // ##### Methods #############################################################
 
+func init() {
+
+	Store = sessions.NewFilesystemStore("", []byte("Pbr3MNKY4ucagum3BFBUdkbFZggYXwovNj1xHqDwV5jd955aomdaOid0BKjFbldM"))
+	gob.Register(map[string]interface{}{})
+}
+
 func main() {
+
 	fmt.Printf("\n%s (%s) %s\n\n", APP_TITLE, APP_NAME, APP_VERSION)
 
 	initialiseLogging()
@@ -87,6 +97,7 @@ func setupHttpServer() {
 	// gin.Accounts is a shortcut for map[string]string
 	authorized := r.Group("/", gin.BasicAuth(tmpAccounts))
 
+	r.GET("/callback", AuthCallbackHandler)
 	authorized.GET("/", routeIndex)
 	authorized.GET("/alerts", routeAlerts)
 	authorized.POST("/alerts", routeAlerts)

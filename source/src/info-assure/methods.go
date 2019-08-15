@@ -29,14 +29,6 @@ func generateRandomString(length int) string {
 		bytes[k] = dictionary[v%byte(len(dictionary))]
 	}
 	return string(bytes)
-
-	// const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-
-	// b := make([]byte, length)
-	// for i := range b {
-	// 	b[i] = charset[rand.Intn(len(charset))]
-	// }
-	// return string(b)
 }
 
 //
@@ -53,6 +45,7 @@ func checkPasswordHash(password string, hash string) error {
 }
 
 func splitRegKey(data string) string {
+
 	parts := strings.Split(data, "\\")
 	if len(parts) == 1 {
 		return data
@@ -63,6 +56,7 @@ func splitRegKey(data string) string {
 
 //
 func processIntParameter(data string) (int, bool) {
+
 	if len(data) > 0 {
 		if util.IsNumber(data) == true {
 			return util.ConvertStringToInt(data), true
@@ -74,6 +68,7 @@ func processIntParameter(data string) (int, bool) {
 
 //
 func processInt64Parameter(data string) (int64, bool) {
+
 	if len(data) > 0 {
 		if util.IsNumber(data) == true {
 			return util.ConvertStringToInt64(data), true
@@ -223,26 +218,3 @@ func generateQr(secret string) (string, error) {
 
 	return base64.StdEncoding.EncodeToString(buf.Bytes()), nil
 }
-
-// // Helper method to create a zip file, prevents too much repeated code
-// func createAndWriteZipFile(zipWriter *zip.Writer, fileName string, jobId int64, data []byte, closeWriter bool) error {
-
-// 	zipFile, err := zipWriter.Create(fileName)
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	_, err = zipFile.Write(data)
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	if closeWriter == true {
-// 		err = zipWriter.Close()
-// 		if err != nil {
-// 			return fmt.Errorf("Error closing the CSV results zip file (%d): %v", jobId, err)
-// 		}
-// 	}
-
-// 	return nil
-// }

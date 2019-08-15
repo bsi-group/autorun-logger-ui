@@ -48,7 +48,7 @@ func InetAton(ipAddr string) (uint32, error) {
 		return 0, errors.New("Wrong IP address format (IPv6")
 	}
 
-	return binary.BigEndian.Uint32(ip), nil
+	return binary.BigEndian.Uint32(ip.To4()), nil
 }
 
 // Converts an integer representation of an IP address to string dotted notation

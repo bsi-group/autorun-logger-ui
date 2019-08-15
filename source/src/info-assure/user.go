@@ -160,14 +160,10 @@ func (u *User) Beautify() {
 func (u *User) SetPassword(password string) bool {
 
 	hash, err := getPasswordHash(password)
-	log.Println(password)
-	log.Println(hash)
 	if err != nil {
 		log.Printf("Error generating password hash: %v", err)
 		return false
 	}
-
-	log.Println(u.ID)
 
 	_, err = db.
 		Update("users").

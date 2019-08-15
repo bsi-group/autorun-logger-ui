@@ -11,7 +11,6 @@ import (
 func routeUsersGet(c *gin.Context) {
 
 	accountType := getAccountType(c)
-	log.Println(accountType)
 	if accountType != ADMIN {
 		c.Redirect(http.StatusTemporaryRedirect, "/logout")
 		return

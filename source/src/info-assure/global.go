@@ -1,5 +1,27 @@
 package main
 
+const ALERT_YELLOW string = `<div class="alert alert-warning" role="alert">%v</div>`
+const ALERT_RED string = `<div class="alert alert-danger" role="alert">%v</div>`
+const ALERT_GREEN string = `<div class="alert alert-success" role="alert">%v</div>`
+
+type AccountType int16
+
+const (
+	USER  AccountType = 0
+	ADMIN AccountType = 1
+)
+
+func (at AccountType) String() string {
+
+	names := [...]string{"User", "Admin"}
+
+	if at < USER || at > ADMIN {
+		return "Unknown"
+	}
+
+	return names[at]
+}
+
 const (
 	EXPORT_TYPE_SHA256 = 1
 	EXPORT_TYPE_MD5    = 2

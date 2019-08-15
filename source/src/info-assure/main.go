@@ -2,48 +2,57 @@ package main
 
 import (
 	"database/sql"
-	"encoding/gob"
+	"encoding/base32"
 	"fmt"
 	"log"
 	"os"
 	"path/filepath"
 	"time"
 
+	"github.com/gin-contrib/sessions"
+	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/contrib/renders/multitemplate"
 	"github.com/gin-gonic/gin"
-	"github.com/gorilla/sessions"
 	"github.com/op/go-logging"
 	"github.com/voxelbrain/goptions"
 	util "github.com/woanware/goutil"
 	"gopkg.in/mgutz/dat.v1"
+	runner "gopkg.in/mgutz/dat.v1/sqlx-runner"
 	"gopkg.in/yaml.v2"
 )
 
 // ##### Variables ###########################################################
 
 var (
-	logger *logging.Logger
-	config *Config
-	db     *runner.DB
-	users  map[string]User
-	Store  *sessions.FilesystemStore
+	logger       *logging.Logger
+	config       *Config
+	db           *runner.DB
+	users        map[string]User
+	sessionStore sessions.Store
 )
 
 // ##### Constants ###########################################################
 
 const APP_TITLE string = "AutoRun Logger UI"
-const APP_NAME = "arl-ui"
+
+//const APP_NAME = "arl-ui"
+const APP_NAME = "arl_web"
 const APP_VERSION = "1.0.5"
 
 // ##### Methods #############################################################
 
-func init() {
-
-	Store = sessions.NewFilesystemStore("", []byte("Pbr3MNKY4ucagum3BFBUdkbFZggYXwovNj1xHqDwV5jd955aomdaOid0BKjFbldM"))
-	gob.Register(map[string]interface{}{})
-}
-
 func main() {
+
+	hash, _ := getPasswordHash("admin")
+	log.Println(hash)
+
+	// Generate random string for Google 2FA
+	random := generateRandomString(16)
+	// For Google Authenticator purpose: https://github.com/google/google-authenticator/wiki/Key-Uri-Format
+	secret := base32.StdEncoding.EncodeToString([]byte(random))
+	log.Println(secret)
+
+	//
 
 	fmt.Printf("\n%s (%s) %s\n\n", APP_TITLE, APP_NAME, APP_VERSION)
 
@@ -51,69 +60,69 @@ func main() {
 
 	opt := struct {
 		ConfigFile string        `goptions:"-c, --config, description='Config file path'"`
-		UsersFile  string        `goptions:"-u, --users, description='Users file path'"`
 		Help       goptions.Help `goptions:"-h, --help, description='Show this help'"`
 	}{ // Default values
 		ConfigFile: "./" + APP_NAME + ".config",
-		UsersFile:  "./users.config",
 	}
 
 	goptions.ParseAndFail(&opt)
 
 	loadConfig(opt.ConfigFile)
-	loadUsers(opt.UsersFile)
 
 	initialiseDatabase()
 	setupHttpServer()
 }
 
+//
 func setupHttpServer() {
 
-	// Define the user accounts in a username:password map that
-	// can be used with the BasicAuth gin-gonic middleware
-	tmpAccounts := make(gin.Accounts)
-	for _, u := range users {
-		tmpAccounts[u.UserName] = u.Password
-		if len(u.Password) == 0 {
-			logger.Fatalf("User configured without a password defined: %s", u.UserName)
-		}
-	}
-
 	logger.Info("HTTP API server running: " + config.HttpIp + ":" + fmt.Sprintf("%d", config.HttpPort))
-	var r *gin.Engine
+	var router *gin.Engine
 	if config.Debug == true {
-		r = gin.Default()
+		router = gin.Default()
 	} else {
 		gin.SetMode(gin.ReleaseMode)
-		r = gin.New()
+		router = gin.New()
 
-		r.Use(gin.Recovery())
+		router.Use(gin.Recovery())
 	}
 
-	r.HTMLRender = loadTemplates(config.TemplateDir)
-	r.Static("/static", config.StaticDir)
+	sessionStore = cookie.NewStore([]byte("secret"))
+	router.Use(sessions.Sessions(APP_NAME, sessionStore))
+	router.HTMLRender = loadTemplates("./templates")
+	router.Static("/static", "./static")
 
-	// Group using gin.BasicAuth() middleware
-	// gin.Accounts is a shortcut for map[string]string
-	authorized := r.Group("/", gin.BasicAuth(tmpAccounts))
+	router.GET("/", routeLogonGet)
+	router.POST("/", routeLogonPost)
+	router.GET("/logout", routeLogout)
 
-	r.GET("/callback", AuthCallbackHandler)
-	authorized.GET("/", routeIndex)
-	authorized.GET("/alerts", routeAlerts)
-	authorized.POST("/alerts", routeAlerts)
-	authorized.GET("/classified", routeClassified)
-	authorized.POST("/classified", routeClassified)
-	authorized.GET("/singlehost", routeSingleHost)
-	authorized.POST("/singlehost", routeSingleHost)
-	authorized.GET("/search", routeSearch)
-	authorized.POST("/search", routeSearch)
-	authorized.GET("/export", routeExport)
-	authorized.POST("/export", routeExport)
-	authorized.GET("/export/:id", routeExportData) // Download
+	authorized := router.Group("/")
+	authorized.Use(AuthorizeMiddleware())
+	{
+		authorized.GET("/enroll", routeEnrollGet)
+		authorized.POST("/enroll", routeEnrollPost)
+		authorized.GET("/verify", routeVerifyGet)
+		authorized.POST("/verify", routeVerifyPost)
+		authorized.GET("/alerts", routeAlerts)
+		authorized.POST("/alerts", routeAlerts)
+		authorized.GET("/classified", routeClassified)
+		authorized.POST("/classified", routeClassified)
+		authorized.GET("/singlehost", routeSingleHost)
+		authorized.POST("/singlehost", routeSingleHost)
+		authorized.GET("/search", routeSearch)
+		authorized.POST("/search", routeSearch)
+		authorized.GET("/export", routeExport)
+		authorized.POST("/export", routeExport)
+		authorized.GET("/export/:id", routeExportData) // Download
+		authorized.GET("/users", routeUsersGet)
+		authorized.GET("/users/new", routeUserNewGet)
+		authorized.POST("/users/new", routeUserNewPost)
+	}
 
-	r.Run(config.HttpIp + ":" + fmt.Sprintf("%d", config.HttpPort))
+	router.Run(config.HttpIp + ":" + fmt.Sprintf("%d", config.HttpPort))
 }
 
+//
 func initialiseDatabase() {
 	// create a normal database connection through database/sql
 	tempDb, err := sql.Open("postgres",
@@ -147,6 +156,7 @@ func initialiseDatabase() {
 
 // Loads the config file contents (yaml) and marshals to a struct
 func loadConfig(configPath string) {
+
 	config = new(Config)
 	data, err := util.ReadTextFromFile(configPath)
 	if err != nil {
@@ -182,60 +192,27 @@ func loadConfig(configPath string) {
 		config.HttpPort = 8080
 	}
 
-	if len(config.StaticDir) == 0 {
-		logger.Fatal("Static directory not set in config file")
-	}
+	// if len(config.StaticDir) == 0 {
+	// 	logger.Fatal("Static directory not set in config file")
+	// }
 
-	if len(config.TemplateDir) == 0 {
-		logger.Fatal("Template directory not set in config file")
-	}
+	// if len(config.TemplateDir) == 0 {
+	// 	logger.Fatal("Template directory not set in config file")
+	// }
 
 	if len(config.ExportDir) == 0 {
 		logger.Fatal("Export dir not set in config file")
 	}
 }
 
-// Loads the config file contents (yaml) and marshals to a struct
-func loadUsers(configPath string) {
-	temp := new(Users)
-	data, err := util.ReadTextFromFile(configPath)
-	if err != nil {
-		log.Fatalf("Error reading the users config file: %v", err)
-	}
-
-	err = yaml.Unmarshal([]byte(data), &temp)
-	if err != nil {
-		log.Fatalf("Error unmarshalling the users config file: %v", err)
-	}
-
-	users = make(map[string]User)
-	for _, u := range temp.Data {
-		users[u.UserName] = u
-	}
-}
-
 // Sets up the logging infrastructure e.g. Stdout and /var/log
 func initialiseLogging() {
+
 	// Setup the actual loggers
 	logger = logging.MustGetLogger(APP_NAME)
 
-	// Check that we have a "nca" sub directory in /var/log
-	if _, err := os.Stat("/var/log/" + APP_NAME); os.IsNotExist(err) {
-		logger.Fatalf("The /var/log/%s directory does not exist", APP_NAME)
-	}
-
-	// Check that we have permission to write to the /var/log/APP_NAME directory
-	f, err := os.Create("/var/log/" + APP_NAME + "/test.txt")
-	if err != nil {
-		logger.Fatalf("Unable to write to /var/log/%s", APP_NAME)
-	}
-
-	// Clear up our tests
-	os.Remove("/var/log/" + APP_NAME + "/test.txt")
-	f.Close()
-
 	// Define the /var/log file
-	logFile, err := os.OpenFile("/var/log/"+APP_NAME+"/log.txt", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	logFile, err := os.OpenFile("./"+APP_NAME+".log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 	if err != nil {
 		logger.Fatalf("Error opening the log file: %v", err)
 	}
@@ -261,22 +238,34 @@ func loadTemplates(templatesDir string) multitemplate.Render {
 	r := multitemplate.New()
 
 	r.AddFromFiles("index",
-		filepath.Join(templatesDir, "base.tmpl"), filepath.Join(templatesDir, "index.tmpl"))
+		filepath.Join(templatesDir, "base.html"), filepath.Join(templatesDir, "index.html"))
+	r.AddFromFiles("logon",
+		filepath.Join(templatesDir, "base.html"), filepath.Join(templatesDir, "logon.html"))
+	r.AddFromFiles("enroll",
+		filepath.Join(templatesDir, "base.html"), filepath.Join(templatesDir, "enroll.html"))
+	r.AddFromFiles("verify",
+		filepath.Join(templatesDir, "base.html"), filepath.Join(templatesDir, "verify.html"))
+	r.AddFromFiles("users",
+		filepath.Join(templatesDir, "base.html"), filepath.Join(templatesDir, "users.html"))
+	r.AddFromFiles("user",
+		filepath.Join(templatesDir, "base.html"), filepath.Join(templatesDir, "user.html"))
 	r.AddFromFiles("alerts",
-		filepath.Join(templatesDir, "base.tmpl"), filepath.Join(templatesDir, "alerts.tmpl"),
-		filepath.Join(templatesDir, "buttons.tmpl"), filepath.Join(templatesDir, "alerts_table.tmpl"))
+		filepath.Join(templatesDir, "base.html"), filepath.Join(templatesDir, "alerts.html"),
+		filepath.Join(templatesDir, "buttons.html"))
 	r.AddFromFiles("classified",
-		filepath.Join(templatesDir, "base.tmpl"), filepath.Join(templatesDir, "classified.tmpl"),
-		filepath.Join(templatesDir, "classified_buttons.tmpl"), filepath.Join(templatesDir, "classified_table.tmpl"))
+		filepath.Join(templatesDir, "base.html"), filepath.Join(templatesDir, "classified.html"),
+		filepath.Join(templatesDir, "buttons.html"))
 	r.AddFromFiles("single_host",
-		filepath.Join(templatesDir, "base.tmpl"), filepath.Join(templatesDir, "single_host.tmpl"),
-		filepath.Join(templatesDir, "buttons.tmpl"), filepath.Join(templatesDir, "single_host_table.tmpl"))
+		filepath.Join(templatesDir, "base.html"), filepath.Join(templatesDir, "single_host.html"),
+		filepath.Join(templatesDir, "buttons.html"))
+	r.AddFromFiles("single_host_data",
+		filepath.Join(templatesDir, "base.html"), filepath.Join(templatesDir, "single_host_data.html"),
+		filepath.Join(templatesDir, "buttons.html"))
 	r.AddFromFiles("export",
-		filepath.Join(templatesDir, "base.tmpl"), filepath.Join(templatesDir, "export.tmpl"),
-		filepath.Join(templatesDir, "export_table.tmpl"))
+		filepath.Join(templatesDir, "base.html"), filepath.Join(templatesDir, "export.html"))
 	r.AddFromFiles("search",
-		filepath.Join(templatesDir, "base.tmpl"), filepath.Join(templatesDir, "search.tmpl"),
-		filepath.Join(templatesDir, "buttons.tmpl"), filepath.Join(templatesDir, "search_table.tmpl"))
+		filepath.Join(templatesDir, "base.html"), filepath.Join(templatesDir, "search.html"),
+		filepath.Join(templatesDir, "buttons.html"))
 
 	return r
 }

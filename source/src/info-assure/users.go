@@ -1,11 +1,28 @@
 package main
 
-type Users struct {
-	Data []User	`yaml:"users"`
-}
+import (
+	"log"
+	"net/http"
 
-type User struct {
-	UserName	string	`yaml:"user_name"`
-	FullName	string	`yaml:"full_name"`
-	Password	string	`yaml:"password"`
+	"github.com/gin-gonic/gin"
+)
+
+//
+func routeUsersGet(c *gin.Context) {
+
+	accountType := getAccountType(c)
+	log.Println(accountType)
+	if accountType != ADMIN {
+		c.Redirect(http.StatusTemporaryRedirect, "/logout")
+		return
+	}
+
+	data, err := getUsers()
+	if err != nil {
+		log.Printf("Error loading users: %v\n", err)
+		goToErrorPage(c, "Unable to load users")
+		return
+	}
+
+	c.HTML(http.StatusOK, "users", gin.H{"users": data})
 }

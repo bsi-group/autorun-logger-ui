@@ -60,3 +60,35 @@
 [[constraint]]
   name = "github.com/gorilla/sessions"
   version = "1.1.3"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/dgryski/dgoogauth"
+
+[[constraint]]
+  name = "github.com/dgrijalva/jwt-go"
+  version = "3.2.0"
+
+[[constraint]]
+  branch = "master"
+  name = "golang.org/x/crypto"
+
+[[constraint]]
+  name = "github.com/mitchellh/mapstructure"
+  version = "1.1.2"
+
+[[constraint]]
+  name = "github.com/appleboy/gin-jwt"
+  version = "2.5.0"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/gin-contrib/sessions"
+
+[[constraint]]
+  name = "rsc.io/qr"
+  version = "0.2.0"
+
+[[constraint]]
+  name = "github.com/disintegration/imaging"
+  version = "1.6.0"

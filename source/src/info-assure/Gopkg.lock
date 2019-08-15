@@ -2,6 +2,42 @@
 
 
 [[projects]]
+  name = "github.com/cenkalti/backoff"
+  packages = ["."]
+  revision = "1e4cf3da559842a91afcb6ea6141451e6c30c618"
+  version = "v2.1.1"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/dgryski/dgoogauth"
+  packages = ["."]
+  revision = "5a805980a5f36312a33a72ca503d4170b9bb6057"
+
+[[projects]]
+  name = "github.com/disintegration/imaging"
+  packages = ["."]
+  revision = "5362c131d56305ce787e79a5b94ffc956df00d62"
+  version = "v1.6.0"
+
+[[projects]]
+  name = "github.com/garyburd/redigo"
+  packages = [
+    "internal",
+    "redis"
+  ]
+  revision = "a69d19351219b6dd56f274f96d85a7014a2ec34e"
+  version = "v1.6.0"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/gin-contrib/sessions"
+  packages = [
+    ".",
+    "cookie"
+  ]
+  revision = "1532893d996f0fedbac1162ea1311ebfb57a3da5"
+
+[[projects]]
   branch = "master"
   name = "github.com/gin-contrib/sse"
   packages = ["."]
@@ -47,6 +83,15 @@
   packages = ["."]
   revision = "f57b7e2d29c6211d16ffa52a0998272f75799030"
   version = "v1.1.3"
+
+[[projects]]
+  name = "github.com/jmoiron/sqlx"
+  packages = [
+    ".",
+    "reflectx"
+  ]
+  revision = "d161d7a76b5661016ad0b085869f77fd410f3e6a"
+  version = "v1.2.0"
 
 [[projects]]
   name = "github.com/json-iterator/go"
@@ -118,6 +163,18 @@
   version = "v1"
 
 [[projects]]
+  name = "github.com/pmylund/go-cache"
+  packages = ["."]
+  revision = "a3647f8e31d79543b2d0f0ae2fe5c379d72cedc0"
+  version = "v2.1.0"
+
+[[projects]]
+  name = "github.com/satori/go.uuid"
+  packages = ["."]
+  revision = "f58768cc1a7a7e77a3bd49e98cdd21419399b6a3"
+  version = "v1.2.0"
+
+[[projects]]
   name = "github.com/ugorji/go"
   packages = ["codec"]
   revision = "8fd0f8d918c8f0b52d0af210a812ba882cc31a1e"
@@ -137,41 +194,28 @@
 
 [[projects]]
   branch = "master"
-  name = "golang.org/x/net"
+  name = "golang.org/x/crypto"
   packages = [
-    "context",
-    "context/ctxhttp"
+    "bcrypt",
+    "blowfish"
   ]
-  revision = "5c2c250b6a70e39b74bb544433a348a892b10530"
+  revision = "a1f597ede03a7bef967a422b5b3a5bd08805a01e"
 
 [[projects]]
   branch = "master"
-  name = "golang.org/x/oauth2"
+  name = "golang.org/x/image"
   packages = [
-    ".",
-    "internal"
+    "bmp",
+    "tiff",
+    "tiff/lzw"
   ]
-  revision = "e64efc72b421e893cbf63f17ba2221e7d6d0b0f3"
+  revision = "0694c2d4d067f97ebef574d63a763ee8ab559da7"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/sys"
   packages = ["unix"]
   revision = "fead79001313d15903fb4605b4a1b781532cd93e"
-
-[[projects]]
-  name = "google.golang.org/appengine"
-  packages = [
-    "internal",
-    "internal/base",
-    "internal/datastore",
-    "internal/log",
-    "internal/remote_api",
-    "internal/urlfetch",
-    "urlfetch"
-  ]
-  revision = "e9657d882bb81064595ca3b56cbe2546bbabf7b1"
-  version = "v1.4.0"
 
 [[projects]]
   name = "gopkg.in/go-playground/validator.v8"
@@ -184,7 +228,10 @@
   packages = [
     ".",
     "common",
-    "reflectx"
+    "kvs",
+    "postgres",
+    "reflectx",
+    "sqlx-runner"
   ]
   revision = "f2918ee2c9dd12bc7f27302aa28333ffcabc24d2"
   version = "v1.1.11"
@@ -195,9 +242,19 @@
   revision = "51d6538a90f86fe93ac480b35f37b2be17fef232"
   version = "v2.2.2"
 
+[[projects]]
+  name = "rsc.io/qr"
+  packages = [
+    ".",
+    "coding",
+    "gf256"
+  ]
+  revision = "ca9a01fc2f9505024045632c50e5e8cd6142fafe"
+  version = "v0.2.0"
+
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "15faba2b603f74c24d8a29c0c5c0aeb2081cb3d08804d4327b01c724fac4af9d"
+  inputs-digest = "b9ac55d409ba4ad5deaf496039ee489d06463773284628e006e228df8ecad0f6"
   solver-name = "gps-cdcl"
   solver-version = 1

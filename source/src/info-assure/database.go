@@ -45,7 +45,8 @@ type Autorun struct {
 	TimeStr       string        `db:"-"`
 	Sha256        string        `db:"sha256"`
 	Md5           string        `db:"md5"`
-	OtherData     template.HTML `db:"-"`
+	Text          string        `db:"text"`
+	TextStr       template.HTML `db:"-"`
 }
 
 // Represents an "alert" record

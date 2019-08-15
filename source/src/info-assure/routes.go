@@ -2,406 +2,18 @@ package main
 
 import (
 	"fmt"
-	"github.com/gin-gonic/gin"
-	util "github.com/woanware/goutil"
 	"html/template"
 	"net/http"
 	"path"
 	"strings"
-	"time"
+
+	"github.com/gin-gonic/gin"
+	util "github.com/woanware/goutil"
 )
-
-const SQL_ALERTS_UNCLASSIFIED string = 
-	`SELECT * 
-	   FROM alert 
-	   JOIN (SELECT alert.id FROM alert
-  LEFT JOIN classification ON (classification.alert_id = alert.id)
-      WHERE classification.id IS NULL
-      LIMIT $1 
-	 OFFSET $2) AS a ON a.id = alert.id
-   ORDER BY alert.timestamp`
-
-const SQL_ALERTS_UNCLASSIFIED_FILTERED string = 
-	`SELECT * 
-	   FROM alert 
-	   JOIN (SELECT alert.id FROM alert
-  LEFT JOIN classification ON (classification.alert_id = alert.id)
-      WHERE classification.id IS NULL AND alert.verified = $3
-      LIMIT $1 
-	 OFFSET $2) AS a ON a.id = alert.id
-   ORDER BY alert.timestamp`
-
-const SQL_ALERTS_CLASSIFIED string = 
-    `SELECT alert.*, classification.user_name as classified_by, classification.timestamp as classified 
-	   FROM alert
-  LEFT JOIN classification ON (classification.alert_id = alert.id)
-       JOIN (SELECT alert.id FROM alert
-  LEFT JOIN classification ON (classification.alert_id = alert.id)
-      WHERE classification.id IS NOT NULL
-      LIMIT $1 
-	 OFFSET $2) AS a ON a.id = alert.id
-   ORDER BY alert.timestamp `
 
 //
 func routeIndex(c *gin.Context) {
 	c.HTML(http.StatusOK, "index", gin.H{})
-}
-
-//
-func routeAlerts(c *gin.Context) {
-
-	numRecsPerPage, successful := processIntParameter(c.PostForm("num_recs_per_page"))
-	if successful == false {
-		numRecsPerPage = 10
-	}
-
-	verified, successful := processIntParameter(c.PostForm("verified"))
-	if successful == false {
-		numRecsPerPage = 10
-	}
-
-	// Appears to be the first request to send the initial set of data
-	if verified != VERIFIED_ALL &&
-		verified != VERIFIED_TRUE &&
-		verified != VERIFIED_FALSE &&
-		verified != VERIFIED_MS {
-
-		loadAlertData(c, 0, numRecsPerPage, VERIFIED_ALL, "")
-		return
-	}
-
-	mode, hasMode := c.GetPostForm("mode")
-
-	// Appears to be the first request to send the initial set of data
-	if (mode != "first" &&
-		mode != "next" &&
-		mode != "previous" &&
-		mode != "classify") || hasMode == false {
-
-		loadAlertData(c, 0, numRecsPerPage, verified, "")
-		return
-	}
-
-	currentPageNumber := processCurrentPageNumber(c.PostForm("current_page_num"), mode)
-
-	message := ""
-	if mode == "classify" {
-		// Ensure that we have some alert ID's to classify
-		ids, idsExist := c.GetPostForm("ids")
-		if idsExist == false {
-
-			loadAlertData(c, currentPageNumber, numRecsPerPage, verified, "No alert's supplied for classification")
-			return
-		}
-
-		user := c.MustGet(gin.AuthUserKey).(string)
-		message = performAlertClassification(user, ids, false)
-	}
-
-	loadAlertData(c, currentPageNumber, numRecsPerPage, verified, message)
-}
-
-//
-func loadAlertData(
-	c *gin.Context,
-	currentPageNumber int,
-	numRecsPerPage int,
-	verified int, error string) {
-
-	errored, noMoreRecords, data := getAlerts(numRecsPerPage, currentPageNumber, verified)
-	if errored == true {
-		c.String(http.StatusInternalServerError, "")
-		return
-	}
-
-	c.HTML(http.StatusOK, "alerts", gin.H{
-		"current_page_num":  currentPageNumber,
-		"num_recs_per_page": numRecsPerPage,
-		"no_more_records":   noMoreRecords,
-		"verified":          verified,
-		"data":              data,
-		"error":             error,
-	})
-}
-
-//
-func getAlerts(numRecsPerPage int, currentPageNumber int, verified int) (bool, bool, []*Alert) {
-
-	var data []*Alert
-	var err error
-
-	if verified == VERIFIED_ALL {
-		err = db.SQL(SQL_ALERTS_UNCLASSIFIED, numRecsPerPage+1, numRecsPerPage*currentPageNumber).QueryStructs(&data)
-	} else {
-		err = db.SQL(SQL_ALERTS_UNCLASSIFIED_FILTERED, numRecsPerPage+1, numRecsPerPage*currentPageNumber, verified).QueryStructs(&data)
-	}
-
-	if err != nil {
-		logger.Errorf("Error querying for alerts: %v", err)
-		return true, false, data
-	}
-
-	// Perform some cleaning of the data, so that it displays better in the HTML
-	for _, v := range data {
-		v.LocationStr = template.HTML("<td class=\"poppy\" data-variation=\"basic\" data-content=\"" + v.Location + "\">" + splitRegKey(v.Location) + "</td>")
-		v.UtcTimeStr = v.UtcTime.Format("15:04:05 02/01/2006")
-		v.TextStr = template.HTML(v.Text)
-		v.LinkedStr = template.HTML(v.Linked)
-
-		if len(v.Linked) > 0 {
-			v.LinkedColumn = template.HTML("<td style=\"text-align:center\"><a href=\"#\" class=\"togglerLinked\" other-data=\"" + util.ConvertInt64ToString(v.Id) + "\"><i class=\"checkmark icon\"></i></a></td>")
-		} else {
-			v.LinkedColumn = template.HTML("<td></td>")
-		}
-	}
-
-	noMoreRecords := false
-	if len(data) < numRecsPerPage+1 {
-		noMoreRecords = true
-	} else {
-		// Remove the last item in the slice/array
-		data = data[:len(data)-1]
-	}
-
-	return false, noMoreRecords, data
-}
-
-//
-func performAlertClassification(userName string, data string, delete bool) string {
-
-	ids := strings.Split(data, ",")
-	for _, id := range ids {
-		if util.IsNumber(id) == false {
-			return "Error performing classification"
-		}
-	}
-
-	tx, err := db.Begin()
-	if err != nil {
-		logger.Errorf("Error starting classication transaction: %v", err)
-		return "Error performing classification"
-	}
-
-	errorOccurred := false
-
-	if delete == true {
-
-		for _, id1 := range ids {
-			_, err = db.
-				DeleteFrom("classification").
-				Where("alert_id = $1", id1).
-				Exec()
-
-			if err != nil {
-				errorOccurred = true
-				logger.Errorf("Error deleting classification: %v (Alert: %d)", err, id1)
-				break
-			}
-		}
-	} else {
-
-		b := db.InsertInto("classification").Columns("alert_id", "user_name", "timestamp")
-
-		for _, id2 := range ids {
-			b.Values(id2, userName, time.Now().UTC().Format(time.RFC3339))
-		}
-
-		_, err = b.Exec()
-		if err != nil {
-			errorOccurred = true
-			logger.Errorf("Error inserting classification: %v", err)
-		}
-	}
-
-	err = tx.Commit()
-	if err != nil {
-		logger.Errorf("Error commiting classication transaction: %v", err)
-	}
-
-	if errorOccurred == true {
-		return "Error performing classification. Refresh the page"
-	}
-
-	return ""
-}
-
-//
-func routeClassified(c *gin.Context) {
-
-	numRecsPerPage, successful := processIntParameter(c.PostForm("num_recs_per_page"))
-	if successful == false {
-		numRecsPerPage = 10
-	}
-
-	mode, hasMode := c.GetPostForm("mode")
-
-	// Appears to be the first request to send the initial set of data
-	if (mode != "first" &&
-		mode != "next" &&
-		mode != "previous" &&
-		mode != "unclassify") || hasMode == false {
-
-		loadClassifiedAlertData(c, 0, numRecsPerPage, "")
-		return
-	}
-
-	currentPageNumber := processCurrentPageNumber(c.PostForm("current_page_num"), mode)
-
-	message := ""
-	if mode == "unclassify" {
-		// Ensure that we have some alert ID's to unclassify
-		ids, idsExist := c.GetPostForm("ids")
-		if idsExist == false {
-
-			loadClassifiedAlertData(c, currentPageNumber, numRecsPerPage, "No alert's supplied for unclassification")
-			return
-		}
-
-		user := c.MustGet(gin.AuthUserKey).(string)
-		message = performAlertClassification(user, ids, true)
-	}
-
-	loadClassifiedAlertData(c, currentPageNumber, numRecsPerPage, message)
-}
-
-//
-func loadClassifiedAlertData(
-	c *gin.Context,
-	currentPageNumber int,
-	numRecsPerPage int,
-	error string) {
-
-	errored, noMoreRecords, data := getClassifiedAlerts(numRecsPerPage, currentPageNumber)
-	if errored == true {
-		c.String(http.StatusInternalServerError, "")
-		return
-	}
-
-	c.HTML(http.StatusOK, "classified", gin.H{
-		"current_page_num":  currentPageNumber,
-		"num_recs_per_page": numRecsPerPage,
-		"no_more_records":   noMoreRecords,
-		"data":              data,
-		"error":             error,
-	})
-}
-
-//
-func getClassifiedAlerts(numRecsPerPage int, currentPageNumber int) (bool, bool, []*ClassifiedAlert) {
-
-	var data []*ClassifiedAlert
-	var err error
-
-	err = db.SQL(SQL_ALERTS_CLASSIFIED, numRecsPerPage+1, numRecsPerPage*currentPageNumber).QueryStructs(&data)
-
-	if err != nil {
-		logger.Errorf("Error querying for unclassified alerts: %v", err)
-		return true, false, data
-	}
-
-	// Perform some cleaning of the data, so that it displays better in the HTML
-	for _, v := range data {
-		v.LocationStr = template.HTML("<td class=\"poppy\" data-variation=\"basic\" data-content=\"" + v.Location + "\">" + splitRegKey(v.Location) + "</td>")
-		v.UtcTimeStr = v.UtcTime.Format("15:04:05 02/01/2006")
-		v.TextStr = template.HTML(v.Text)
-		v.LinkedStr = template.HTML(v.Linked)
-
-		if len(v.Linked) > 0 {
-			v.LinkedColumn = template.HTML("<td style=\"text-align:center\"><a href=\"#\" class=\"togglerLinked\" other-data=\"" + util.ConvertInt64ToString(v.Id) + "\"><i class=\"checkmark icon\"></i></a></td>")
-		} else {
-			v.LinkedColumn = template.HTML("<td></td>")
-		}
-	}
-
-	noMoreRecords := false
-	if len(data) < numRecsPerPage+1 {
-		noMoreRecords = true
-	} else {
-		// Remove the last item in the slice/array
-		data = data[:len(data)-1]
-	}
-
-	return false, noMoreRecords, data
-}
-
-//
-func routeSingleHost(c *gin.Context) {
-
-	host := c.PostForm("host")
-
-	if len(host) == 0 {
-		c.HTML(http.StatusOK, "single_host", gin.H{
-			"has_data": false,
-			"host":     "",
-			"data":     nil,
-		})
-		return
-	}
-
-	errored, data := getAutorunsForSingleHost(host)
-	if errored == true {
-		c.String(http.StatusInternalServerError, "")
-		return
-	}
-
-	hasData := true
-	if len(data) == 0 {
-		hasData = false
-	}
-
-	c.HTML(http.StatusOK, "single_host", gin.H{
-		"has_data": hasData,
-		"host":     host,
-		"data":     data,
-	})
-}
-
-func getAutorunsForSingleHost(host string) (bool, []*Alert) {
-	var i Instance
-	var data []*Alert
-
-	err := db.
-		Select(`id, domain, host`).
-		From("instance").
-		Where("LOWER(instance.host) = LOWER($1)", host).
-		Limit(1).
-		OrderBy("timestamp DESC").
-		QueryStruct(&i)
-
-	if err != nil {
-		if strings.Contains(err.Error(), "no rows in result set") == true {
-			return false, data
-		}
-
-		logger.Errorf("Error querying for a hosts instance: %v", err)
-		return true, data
-	}
-
-	err = db.
-		Select(`id, location, item_name, enabled, profile, launch_string, description, company, signer, version_number, file_path, file_name, file_directory, time, sha256, md5`).
-		From("current_autoruns").
-		Where("instance = $1", i.Id).
-		OrderBy("location, item_name").
-		QueryStructs(&data)
-
-	if err != nil {
-		if strings.Contains(err.Error(), "no rows in result set") == true {
-			return false, data
-		}
-
-		logger.Errorf("Error querying for a hosts instance: %v", err)
-		return true, data
-	}
-
-	// Perform some cleaning of the data, so that it displays better in the HTML
-	for _, v := range data {
-		v.LocationStr = template.HTML("<td class=\"poppy\" data-variation=\"basic\" data-content=\"" + v.Location + "\">" + splitRegKey(v.Location) + "</td>")
-		v.TimeStr = v.Time.Format("15:04:05 02/01/2006")
-		v.TextStr = template.HTML(v.Text)
-		v.LinkedStr = template.HTML(v.Linked)
-	}
-
-	return false, data
 }
 
 //
@@ -559,15 +171,15 @@ func getSearch(
 		v.UtcTimeStr = v.Time.Format("15:04:05 02/01/2006")
 		v.TextStr = template.HTML(fmt.Sprintf(
 			`<strong>File Path:</strong> %s<br>
-			<strong>Launch String:</strong> %s<br>
-			<strong>Enabled:</strong> %t<br>
-			<strong>Description:</strong> %s<br>
-			<strong>Company:</strong> %s<br>
-			<strong>Signer:</strong> %s<br>
-			<strong>Version:</strong> %s<br>
-			<strong>Time:</strong> %s<br>
-			<strong>SHA256:</strong> %s<br>
-			<strong>MD5:</strong> %s<br>`,
+<strong>Launch String:</strong> %s
+<strong>Enabled:</strong> %t
+<strong>Description:</strong> %s
+<strong>Company:</strong> %s
+<strong>Signer:</strong> %s
+<strong>Version:</strong> %s
+<strong>Time:</strong> %s
+<strong>SHA256:</strong> %s
+<strong>MD5:</strong> %s`,
 			v.FilePath, v.LaunchString, v.Enabled, v.Description, v.Company, v.Signer, v.VersionNumber, v.Time, v.Sha256, v.Md5))
 	}
 
@@ -705,3 +317,49 @@ func getExport(id int64) (bool, Export) {
 
 	return false, e
 }
+
+// //
+// func routeLogon(c *gin.Context) {
+
+// 	// domain := "woanware.eu.auth0.com"
+// 	// aud := ""
+
+// 	// conf := &oauth2.Config{
+// 	// 	ClientID:     "hhJm3c170y6rfmbzbstS0Q46Eriza5CY",
+// 	// 	ClientSecret: "eBBD4h2mU_JKQqpWdgG1uCz587-wfTON-r9UWarjFZPBgvYHWYXdqxdPYUAUIAVz",
+// 	// 	RedirectURL:  "http://0.0.0.0:8080/callback",
+// 	// 	Scopes:       []string{"openid", "profile"},
+// 	// 	Endpoint: oauth2.Endpoint{
+// 	// 		AuthURL:  "https://" + domain + "/authorize",
+// 	// 		TokenURL: "https://" + domain + "/oauth/token",
+// 	// 	},
+// 	// }
+
+// 	// if aud == "" {
+// 	// 	aud = "https://" + domain + "/userinfo"
+// 	// }
+
+// 	// // Generate random state
+// 	// b := make([]byte, 32)
+// 	// rand.Read(b)
+// 	// state := base64.StdEncoding.EncodeToString(b)
+
+// 	// session, err := sessionStore.Get(c.Request, "state")
+// 	// if err != nil {
+// 	// 	log.Printf("Error getting user session: %v\n", err)
+// 	// 	goToErrorPage(c, "Unable to perform login")
+// 	// 	return
+// 	// }
+// 	// session.Values["state"] = state
+// 	// err = session.Save(c.Request, c.Writer)
+// 	// if err != nil {
+// 	// 	log.Printf("Error saving session state: %v\n", err)
+// 	// 	goToErrorPage(c, "Unable to perform login")
+// 	// 	return
+// 	// }
+
+// 	// audience := oauth2.SetAuthURLParam("audience", aud)
+// 	// url := conf.AuthCodeURL(state, audience)
+
+// 	// c.Redirect(http.StatusTemporaryRedirect, url)
+// }

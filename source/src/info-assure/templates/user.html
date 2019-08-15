@@ -1,0 +1,58 @@
+{{ define "navbar" }}
+<a class="navbar-brand" href="#">ARL</a>
+<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavCollapse" aria-controls="navbarNavCollapse" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+</button>
+
+<div class="navbar-collapse" id="navbarNavCollapse">
+  <div class="navbar-nav">
+    <a class="nav-item nav-link" href="/alerts">Alerts</a>
+    <a class="nav-item nav-link" href="/classified">Classified</a>
+    <a class="nav-item nav-link" href="/singlehost">Single Host</a>
+    <a class="nav-item nav-link" href="/search">Search</a>
+    <a class="nav-item nav-link" href="/export">Export</a>
+    <a class="nav-item nav-link active" href="/users">Users</a>
+  </div>
+</div>
+
+<nav class="navbar-nav">
+  <li class="nav-item">
+    <a class="nav-link" href="/logout">Logout</a>
+  </li>
+</nav>
+{{ end }}
+
+{{ define "content" }}
+
+{{ if .message }}
+{{ if ne .message "" }}
+  <br>
+  <div class="row justify-content-md-center">
+      {{.message}}
+  </div>
+{{ end }}  
+{{ end }} 
+
+<div class="row">
+  <div class="col-sm-9 col-md-7 col-lg-5 mx-auto">
+    <div class="card my-5">
+      <div class="card-body">
+        <h5 class="card-title text-center">{{ .title }}</h5>
+        <form class="form" action="/users/{{ .endpoint }}" method="POST">
+          <input class="form-control form-control-sm" type="text" id="username" name="username" placeholder="Username" required autofocus value="{{ .u.Username }}">
+          <br>
+          <input class="form-control form-control-sm" type="text" name="name" placeholder="Name" value="{{ .u.Name }}">
+          <div class="form-group">
+            <label>Account Type</label>
+            <select class="form-control form-control-sm" name="account_type">
+              <option value="0" {{ if eq .u.AccountType 0 }}selected{{ end }}>User</option>
+              <option value="1" {{ if eq .u.AccountType 1 }}selected{{ end }}>Admin</option>
+            </select>
+          </div>
+          <button class="btn btn-primary btn-sm btn-block text-uppercase" type="submit">Submit</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{{ end }}

@@ -1,0 +1,156 @@
+{{ define "navbar" }}
+<a class="navbar-brand" href="#">ARL</a>
+<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavCollapse" aria-controls="navbarNavCollapse" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+</button>
+
+<div class="navbar-collapse" id="navbarNavCollapse">
+  <div class="navbar-nav">
+    <a class="nav-item nav-link" href="/alerts">Alerts</a>
+    <a class="nav-item nav-link" href="/classified">Classified</a>
+    <a class="nav-item nav-link" href="/singlehost">Single Host</a>
+    <a class="nav-item nav-link active" href="/search">Search</a>
+    <a class="nav-item nav-link" href="/export">Export</a>
+    <a class="nav-item nav-link" href="/users">Users</a>
+  </div>
+</div>
+
+<nav class="navbar-nav">
+  <li class="nav-item">
+    <a class="nav-link" href="/logout">Logout</a>
+  </li>
+</nav>
+{{ end }}
+
+{{ define "content" }}
+<br>
+<form class="form" method="post" name="search_form" id="search_form">
+    <input type="hidden" name="current_page_num" id="current_page_num" value="{{ .current_page_num }}"/>
+
+    <div class="row">
+        <div class="col">
+            <div class="form-group">
+                <label for="data_type">Data</label>
+
+                <select class="form-control" name="data_type" id="data_type">
+                    <option value="0" {{ if eq .data_type 0 }}selected{{ end }} ></option>
+                    <option value="1" {{ if eq .data_type 1 }}selected{{ end }} >Alerts</option>
+                    <option value="2" {{ if eq .data_type 2 }}selected{{ end }} >Autoruns</option>
+                </select>
+            </div>    
+        </div>
+    </div>
+        
+    <div class="row">
+        <div class="col">
+            <div class="form-group">
+                <label for="search_type">Type</label>
+
+                <select class="form-control" name="search_type" id="search_type">
+                    <option value="0" {{ if eq .search_type 0 }}selected{{ end }} ></option>
+                    <option value="1" {{ if eq .search_type 1 }}selected{{ end }} >File Path</option>
+                    <option value="2" {{ if eq .search_type 2 }}selected{{ end }} >Launch String</option>
+                    <option value="3" {{ if eq .search_type 3 }}selected{{ end }} >Location</option>
+                    <option value="4" {{ if eq .search_type 4 }}selected{{ end }} >Item Name</option>
+                    <option value="5" {{ if eq .search_type 5 }}selected{{ end }} >Profile</option>
+                    <option value="6" {{ if eq .search_type 6 }}selected{{ end }} >Description</option>
+                    <option value="7" {{ if eq .search_type 7 }}selected{{ end }} >Company</option>
+                    <option value="8" {{ if eq .search_type 8 }}selected{{ end }} >Signer</option>
+                    <option value="9" {{ if eq .search_type 9 }}selected{{ end }} >SHA256</option>
+                    <option value="10" {{ if eq .search_type 10 }}selected{{ end }} >MD5</option>
+                </select>
+            </div>
+        </div>   
+    </div> 
+
+    <div class="row">
+        <div class="col">
+            <div class="form-group">
+                <label for="search_value">Value</label>
+                <input type="text" class="form-control" name="search_value" id="search_value" value="{{ if ne .search_value "" }}{{ .search_value }}{{ end}}"/>
+            </div>    
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col">
+            <button id="search" name="search" type="submit" class="btn btn-primary btn-sm">Search</button>
+        </div>
+    </div>
+
+    &nbsp;
+
+    {{ if eq .has_data true }}
+
+        {{ template "buttons_top" . }}
+
+        <table id="data" class="ui celled selectable striped compact table">
+            <thead>
+                <tr>
+                    <th>Domain</th>
+                    <th class="poppy" data-variation="basic" data-content="Host" style="text-align: center;"><i class="blue desktop icon"></i></th>
+                    <th class="poppy" data-variation="basic" data-content="Timestamp" style="text-align: center;"><i class="blue clock icon"></i></th>
+                    <th>Location</th>
+                    <th>Name</th>
+                    <th>Profile</th>
+                </tr>
+            </thead>
+
+            <tfoot>
+            </tfoot>
+
+            <tbody>
+                {{ range $d := .data }}
+                <tr id="parent{{ $d.Id }}">
+                    <td>{{ $d.Domain }}</td>
+                    <td>{{ $d.Host }}</td>
+                    <td>{{ $d.UtcTimeStr }}</td>
+                    <td>{{ $d.Location }}</td>
+                    <td>{{ $d.ItemName }}</td>
+                    <td style="word-wrap: break-word"><a href="#" class="togglerText" other-data="{{ $d.Id }}">{{ $d.Profile }}</a></td>
+                </tr>
+                <tr class="childText{{ $d.Id }}" style="display:none">
+                    <td colspan=8>{{ $d.TextStr }}</td>
+                </tr>
+                {{ end }}
+            </tbody>
+        </table>
+
+        {{ template "buttons_bottom" . }}
+
+    {{ end }}
+</form>
+
+<script type="text/javascript">
+
+    // Show/hide the child data rows
+    $(".togglerText").click(function(e){
+        e.preventDefault();
+        $('.childText'+$(this).attr('other-data')).toggle();
+    });
+
+    // When the top "records" drop down changes, submit the HTML form so
+    // that the data set is refreshed from the beginning with the new records value
+    $("#num_recs_per_page").change(function(){
+        var input = $("<input>").attr("type", "hidden").attr("name", "mode").val('first');
+        $('#search_form').append($(input));
+        $("#search_form").submit();
+    });
+
+    // When the bottom "records" drop down changes the set the top "records" drop down to the same value
+    // Then submit the HTML form so that the data set is refreshed from the beginning with the new records value
+    $("#num_recs_per_page_bottom").change(function(){
+        $("#num_recs_per_page").val($(this).val());
+        var input = $("<input>").attr("type", "hidden").attr("name", "mode").val('first');
+        $('#search_form').append($(input));
+        $("#search_form").submit();
+    });
+
+    $( document ).ready(function() {
+        // Select the initial "records" value within the drop down's
+        $('#num_recs_per_page').val('{{ .num_recs_per_page }}');
+        $('#num_recs_per_page_bottom').val('{{ .num_recs_per_page }}');
+    });
+
+</script>
+{{ end }}

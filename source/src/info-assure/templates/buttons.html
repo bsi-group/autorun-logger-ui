@@ -1,0 +1,275 @@
+{{ define "buttons_top" }}
+<div class="row">
+    <div class="eight wide column">
+        <div class="btn-group">
+            {{ if eq .current_page_num 0 }}
+                <button id="first" name="mode" type="submit" class="btn btn-primary" value="first">First</button>
+                <button id="previous" name="previous" type="submit" class="btn btn-primary" disabled>Previous</button>
+            {{ else }}
+                <button id="first" name="mode" type="submit" class="btn btn-primary" value="first">First</button>
+                <button id="previous" name="mode" type="submit" class="btn btn-primary" value="previous">Previous</button>
+            {{ end }}
+
+            {{ if .no_more_records }}
+                <button id="next" name="mode" type="submit" class="btn btn-primary" disabled>Next</button>
+            {{ else }}
+                <button id="next" name="mode" type="submit" class="btn btn-primary" value="next">Next</button>
+            {{ end }}
+            <button id="classify" name="mode" type="button" class="btn btn-primary" value="classify">Classify</button>
+        </div>
+    </div>
+
+    &nbsp;
+    &nbsp;
+
+    <div class="four wide column">
+        <div class="form-group form-inline form-control-sm">  
+            <label for="verified">Verified</label>&nbsp;&nbsp;&nbsp;
+            <select class="form-control" name="verified" id="verified" value="{{ .verified }}">
+                <option value="0">All</option>
+                <option value="1">Verified</option>
+                <option value="2">Unverified</option>
+                <option value="3">Verified (Microsoft)</option>
+            </select>
+        </div>
+    </div>
+
+   &nbsp;
+   &nbsp;
+
+    <div class="right aligned four wide column">
+        <div class="form-group form-inline form-control-sm">  
+            <label for="num_recs_per_page">Records Per Page</label>&nbsp;&nbsp;&nbsp;
+            <select class="form-control" name="num_recs_per_page" id="num_recs_per_page" value="{{ .num_recs_per_page }}">
+                <option value="10">10</option>
+                <option value="20">20</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+                <option value="200">200</option>
+                <option value="500">500</option>
+                <option value="1000">1000</option>
+            </select>
+        </div>
+    </div>
+</div>
+{{ end }}
+
+{{ define "buttons_bottom" }}
+<div class="row">
+    <div class="eight wide column">
+        <div class="btn-group">
+            {{ if eq .current_page_num 0 }}
+                <button id="first" name="mode" type="submit" class="btn btn-primary" value="first">First</button>
+                <button id="previous" name="previous" type="submit" class="btn btn-primary" disabled>Previous</button>
+            {{ else }}
+                <button id="first" name="mode" type="submit" class="btn btn-primary" value="first">First</button>
+                <button id="previous" name="mode" type="submit" class="btn btn-primary" value="previous">Previous</button>
+            {{ end }}
+
+            {{ if .no_more_records }}
+                <button id="next" name="mode" type="submit" class="btn btn-primary" disabled>Next</button>
+            {{ else }}
+                <button id="next" name="mode" type="submit" class="btn btn-primary" value="next">Next</button>
+            {{ end }}
+            <button id="classify" name="mode" type="button" class="btn btn-primary" value="classify">Classify</button>
+        </div>
+    </div>
+
+    &nbsp;
+    &nbsp;
+
+    <div class="four wide column">
+        <div class="form-group form-inline form-control-sm">  
+            <label for="verified">Verified</label>&nbsp;&nbsp;&nbsp;
+            <select class="form-control" name="verified_bottom" id="verified_bottom" value="{{ .verified }}">
+                <option value="0">All</option>
+                <option value="1">Verified</option>
+                <option value="2">Unverified</option>
+                <option value="3">Verified (Microsoft)</option>
+            </select>
+        </div>
+    </div>
+
+    &nbsp;
+    &nbsp;
+
+    <div class="right aligned four wide column">
+        <div class="form-group form-inline form-control-sm">  
+            <label for="num_recs_per_page">Records Per Page</label>&nbsp;&nbsp;&nbsp;
+            <select class="form-control" name="num_recs_per_page_bottom" id="num_recs_per_page_bottom" value="{{ .num_recs_per_page }}">
+                <option value="10">10</option>
+                <option value="20">20</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+                <option value="200">200</option>
+                <option value="500">500</option>
+                <option value="1000">1000</option>
+            </select>
+        </div>
+    </div>
+</div>
+{{ end }}
+
+{{ define "classified_buttons_top" }}
+<div class="row">
+    <div class="eight wide column">
+        <div class="btn-group">
+            {{ if eq .current_page_num 0 }}
+                <button id="first" name="mode" type="submit" class="btn btn-primary" value="first">First</button>
+                <button id="previous" name="previous" type="submit" class="btn btn-primary" disabled>Previous</button>
+            {{ else }}
+                <button id="first" name="mode" type="submit" class="btn btn-primary" value="first">First</button>
+                <button id="previous" name="mode" type="submit" class="btn btn-primary" value="previous">Previous</button>
+            {{ end }}
+
+            {{ if .no_more_records }}
+                <button id="next" name="mode" type="submit" class="btn btn-primary" disabled>Next</button>
+            {{ else }}
+                <button id="next" name="mode" type="submit" class="btn btn-primary" value="next">Next</button>
+            {{ end }}
+            <button id="unclassify" name="mode" type="button" class="btn btn-primary" value="classify">Unclassify</button>
+        </div>
+    </div>
+
+    &nbsp;
+    &nbsp;
+
+    <div class="right aligned four wide column">
+        <div class="form-group form-inline form-control-sm">   
+            <label for="num_recs_per_page">Records Per Page</label>&nbsp;&nbsp;&nbsp;
+            <select class="form-control" name="num_recs_per_page" id="num_recs_per_page" value="{{ .num_recs_per_page }}">
+                <option value="10">10</option>
+                <option value="20">20</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+                <option value="200">200</option>
+                <option value="500">500</option>
+                <option value="1000">1000</option>
+            </select>
+        </div>
+    </div>
+</div>
+{{ end }}
+
+{{ define "classified_buttons_bottom" }}
+<div class="row">
+    <div class="eight wide column">
+        <div class="btn-group">
+            {{ if eq .current_page_num 0 }}
+                <button id="first" name="mode" type="submit" class="btn btn-primary" value="first">First</button>
+                <button id="previous" name="previous" type="submit" class="btn btn-primary" disabled>Previous</button>
+            {{ else }}
+                <button id="first" name="mode" type="submit" class="btn btn-primary" value="first">First</button>
+                <button id="previous" name="mode" type="submit" class="btn btn-primary" value="previous">Previous</button>
+            {{ end }}
+
+            {{ if .no_more_records }}
+                <button id="next" name="mode" type="submit" class="btn btn-primary" disabled>Next</button>
+            {{ else }}
+                <button id="next" name="mode" type="submit" class="btn btn-primary" value="next">Next</button>
+            {{ end }}
+            <button id="unclassify" name="mode" type="button" class="btn btn-primary" value="unclassify">Unclassify</button>
+        </div>
+    </div>
+
+    &nbsp;
+    &nbsp;
+
+    <div class="right aligned four wide column">
+        <div class="form-group form-inline form-control-sm">  
+            <label for="num_recs_per_page">Records Per Page</label>&nbsp;&nbsp;&nbsp;
+            <select class="form-control" name="num_recs_per_page_bottom" id="num_recs_per_page_bottom" value="{{ .num_recs_per_page }}">
+                <option value="10">10</option>
+                <option value="20">20</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+                <option value="200">200</option>
+                <option value="500">500</option>
+                <option value="1000">1000</option>
+            </select>
+        </div>    
+    </div>
+</div>
+{{ end }}
+
+{{ define "buttons_single_host_top" }}
+<div class="row justify-content-md-center">
+    <div class="eight wide column">
+        <div class="btn-group">
+            {{ if eq .current_page_num 0 }}
+                <button id="first" name="mode" type="submit" class="btn btn-primary" value="first">First</button>
+                <button id="previous" name="previous" type="submit" class="btn btn-primary" disabled>Previous</button>
+            {{ else }}
+                <button id="first" name="mode" type="submit" class="btn btn-primary" value="first">First</button>
+                <button id="previous" name="mode" type="submit" class="btn btn-primary" value="previous">Previous</button>
+            {{ end }}
+
+            {{ if .no_more_records }}
+                <button id="next" name="mode" type="submit" class="btn btn-primary" disabled>Next</button>
+            {{ else }}
+                <button id="next" name="mode" type="submit" class="btn btn-primary" value="next">Next</button>
+            {{ end }}
+            <button id="export" name="mode" type="submit" class="btn btn-primary" value="export">Export</button>
+        </div>
+    </div>
+
+   &nbsp;
+   &nbsp;
+
+    <div class="right aligned four wide column">
+        <div class="form-group form-inline form-control-sm">  
+            <label for="num_recs_per_page">Records Per Page</label>&nbsp;&nbsp;&nbsp;
+            <select class="form-control" name="num_recs_per_page" id="num_recs_per_page" value="{{ .num_recs_per_page }}">
+                <option value="10">10</option>
+                <option value="20">20</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+                <option value="200">200</option>
+                <option value="500">500</option>
+                <option value="1000">1000</option>
+            </select>
+        </div>
+    </div>
+</div>
+{{ end }}
+
+{{ define "buttons_single_host_bottom" }}
+<div class="row justify-content-md-center">
+    <div class="eight wide column">
+        <div class="btn-group">
+            {{ if eq .current_page_num 0 }}
+                <button id="first" name="mode" type="submit" class="btn btn-primary" value="first">First</button>
+                <button id="previous" name="previous" type="submit" class="btn btn-primary" disabled>Previous</button>
+            {{ else }}
+                <button id="first" name="mode" type="submit" class="btn btn-primary" value="first">First</button>
+                <button id="previous" name="mode" type="submit" class="btn btn-primary" value="previous">Previous</button>
+            {{ end }}
+
+            {{ if .no_more_records }}
+                <button id="next" name="mode" type="submit" class="btn btn-primary" disabled>Next</button>
+            {{ else }}
+                <button id="next" name="mode" type="submit" class="btn btn-primary" value="next">Next</button>
+            {{ end }}
+            <button id="export" name="mode" type="submit" class="btn btn-primary" value="export">Export</button>
+        </div>
+    </div>
+
+    &nbsp;
+    &nbsp;
+
+    <div class="right aligned four wide column">
+        <div class="form-group form-inline form-control-sm">  
+            <label for="num_recs_per_page">Records Per Page</label>&nbsp;&nbsp;&nbsp;
+            <select class="form-control" name="num_recs_per_page_bottom" id="num_recs_per_page_bottom" value="{{ .num_recs_per_page }}">
+                <option value="10">10</option>
+                <option value="20">20</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+                <option value="200">200</option>
+                <option value="500">500</option>
+                <option value="1000">1000</option>
+            </select>
+        </div>
+    </div>
+</div>
+{{ end }}

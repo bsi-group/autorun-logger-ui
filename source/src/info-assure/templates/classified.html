@@ -1,0 +1,147 @@
+{{ define "navbar" }}
+<a class="navbar-brand" href="#">ARL</a>
+<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavCollapse" aria-controls="navbarNavCollapse" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+</button>
+
+<div class="navbar-collapse" id="navbarNavCollapse">
+  <div class="navbar-nav">
+    <a class="nav-item nav-link" href="/alerts">Alerts</a>
+    <a class="nav-item nav-link active" href="/classified">Classified</a>
+    <a class="nav-item nav-link" href="/singlehost">Single Host</a>
+    <a class="nav-item nav-link" href="/search">Search</a>
+    <a class="nav-item nav-link" href="/export">Export</a>
+    <a class="nav-item nav-link" href="/users">Users</a>
+  </div>
+</div>
+
+<nav class="navbar-nav">
+  <li class="nav-item">
+    <a class="nav-link" href="/logout">Logout</a>
+  </li>
+</nav>
+{{ end }}
+
+{{ define "content" }}
+    
+<form class="ui form" method="post" name="data_form" id="data_form">
+    <input type="hidden" name="current_page_num" id="current_page_num" value="{{ .current_page_num }}"/>
+    <input type="hidden" name="ids" id="ids" value=""/>
+
+    <br>
+    {{ template "classified_buttons_top" . }}
+
+    <div class="row">
+
+    <table id="data" data-toggle="table" data-detail-view="true" data-detail-formatter="detailFormatter" data-click-to-select="true">
+        <thead class="thead-dark">
+            <tr>
+                <th data-field="checkbox" data-checkbox="true"></th>
+                <th data-field="id" data-visible="false"></th>
+                <th>Domain</th>
+                <th class="poppy" data-toggle="tooltip" data-placement="top" title="Host" style="text-align: center;"><i class="fas fa-desktop"></i></th>
+                <th class="poppy" data-toggle="tooltip" data-placement="top" title="Timestamp" style="text-align: center;"><i class="far fa-clock"></i></th>
+                <th>Location</th>
+                <th>Name</th>
+                <th>Profile</th>
+                <th>Linked</th>
+                <th>Classified By</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {{ range $i, $d := .data }}
+            <tr>
+                <td></td>
+                <td>{{ $d.Id }}</td>
+                <td>{{ $d.Domain }}</td>
+                <td>{{ $d.Host }}</td>
+                <td>{{ $d.UtcTimeStr }}</td>
+                {{ $d.LocationStr }}
+                <td style="word-wrap: break-word">{{ $d.ItemName }}</td>
+                <td>{{ $d.Profile }}</td>
+                {{ $d.LinkedColumn }}
+                <td>{{ $d.ClassifiedBy }}</td>
+
+                <span style="display: none;" id="text{{$i}}">
+                    <pre>{{ $d.TextStr }}</pre>
+                </span>
+            </tr>
+            
+            <!--<tr class="childLinked{{ $d.Id }}" style="display:none">
+                <td colspan=9>{{ $d.LinkedStr }}</td>
+            -->
+            </tr>
+            {{ end }}
+        </tbody>
+    </table>
+
+    </div>
+
+    <br>
+
+    {{ template "classified_buttons_bottom" . }}
+</form>
+
+<script type="text/javascript">
+
+var $table = $('#data');
+
+    $table.on('expand-row.bs.table', function(e, index, row, $detail) {
+        var res = $("#text" + index).html();
+        $detail.html(res);
+    });
+
+    $table.on("click-row.bs.table", function(e, row, $tr) {
+
+        if ($tr.next().is('tr.detail-view')) {
+            $table.bootstrapTable('collapseRow', $tr.data('index'));
+        } else {
+            $table.bootstrapTable('expandRow', $tr.data('index'));
+        }
+    });
+
+    // When the top "records" drop down changes, submit the HTML form so
+    // that the data set is refreshed from the beginning with the new records value
+    $("#num_recs_per_page").change(function(){
+        var input = $("<input>").attr("type", "hidden").attr("name", "mode").val('first');
+        $('#data_form').append($(input));
+        $("#data_form").submit();
+    });
+
+    // When the bottom "records" drop down changes the set the top "records" drop down to the same value
+    // Then submit the HTML form so that the data set is refreshed from the beginning with the new records value
+    $("#num_recs_per_page_bottom").change(function(){
+        $("#num_recs_per_page").val($(this).val());
+        var input = $("<input>").attr("type", "hidden").attr("name", "mode").val('first');
+        $('#data_form').append($(input));
+        $("#data_form").submit();
+    });
+
+    $( document ).ready(function() {
+
+        // Select the initial "records" value within the drop down's
+        $('#num_recs_per_page').val('{{ .num_recs_per_page }}');
+        $('#num_recs_per_page_bottom').val('{{ .num_recs_per_page }}');
+
+        // If the user attempts to classify without selecting/checking any alerts then display an alert
+        $(document).on('click', '#unclassify', function(){
+
+            // Retrieve and store all of the selected ID's
+            var selected = $table.bootstrapTable('getSelections');
+            var ids = []
+
+            for (i = 0; i < selected.length; i++) { 
+                ids.push(selected[i].id)
+            }    
+
+            var mode = $("<input>").attr("type", "hidden").attr("name", "mode").val('unclassify');
+            $('#data_form').append($(mode));
+            document.getElementById("ids").value = ids
+
+            $("#data_form").submit();
+        });
+    });
+
+</script>
+{{ end }}

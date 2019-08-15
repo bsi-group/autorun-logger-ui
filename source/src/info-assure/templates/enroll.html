@@ -1,0 +1,34 @@
+{{ define "navbar" }}
+<a class="navbar-brand" href="#">ARL</a>
+{{ end }}
+
+{{ define "content" }}
+
+{{ if .message }}
+{{ if ne .message "" }}
+  <br>
+  <div class="row justify-content-md-center">
+      {{.message}}
+  </div>
+{{ end }}  
+{{ end }} 
+
+<div class="row justify-content-md-center">
+  <div class="col-sm-9 col-md-7 col-lg-5 mx-auto">
+    <div class="card my-5">
+      <div class="card-body">
+        <h5 class="card-title text-center">Enroll (Google Authenticator)</h5>
+        <form class="form" action="/enroll" method="POST">
+          <div class="row justify-content-md-center">
+          <img src="data:image/png;base64,{{ .qr }}">
+        </div>
+          <br>
+          <input type="text" class="form-control" name="code" id="code" placeholder="Verification Code" value="{{ .code }}">
+          <br>
+          <button class="btn btn-primary btn-sm btn-block text-uppercase" type="submit">Submit</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{{ end }}

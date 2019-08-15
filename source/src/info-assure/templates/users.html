@@ -1,0 +1,79 @@
+{{ define "navbar" }}
+<a class="navbar-brand" href="#">ARL</a>
+<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavCollapse" aria-controls="navbarNavCollapse" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+</button>
+
+<div class="navbar-collapse" id="navbarNavCollapse">
+  <div class="navbar-nav">
+    <a class="nav-item nav-link" href="/alerts">Alerts</a>
+    <a class="nav-item nav-link" href="/classified">Classified</a>
+    <a class="nav-item nav-link" href="/singlehost">Single Host</a>
+    <a class="nav-item nav-link" href="/search">Search</a>
+    <a class="nav-item nav-link" href="/export">Export</a>
+    <a class="nav-item nav-link active" href="/users">Users</a>
+  </div>
+</div>
+
+<nav class="navbar-nav">
+  <li class="nav-item">
+    <a class="nav-link" href="/logout">Logout</a>
+  </li>
+</nav>
+{{ end }}
+
+{{ define "content" }}
+
+{{ if .message }}
+{{ if ne .message "" }}
+  <br>
+  <div class="row justify-content-md-center">
+      {{.message}}
+  </div>
+{{ end }}  
+{{ end }} 
+
+<br>
+<div class="row">
+    <a href="/users/new"> <button class="btn btn-success btn-sm" type="button">New</button></a>
+</div>
+<br>
+
+<div class="row">
+    <table id="data" class="table table-striped table-bordered table-sm">
+        <thead class="thead-dark">
+            <tr>
+                <th>Username</th>
+                <th>Name</th>
+                <th>Role</th>
+                <th>Locked</th>
+                <th class="text-right">Actions</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {{ range $u := .users }}
+                {{ if eq $u.Locked true}}
+                <tr class="table-warning">
+                {{ else }}
+                <tr>
+                {{ end }}
+
+                    <td class="small align-middle">{{ $u.Username }}</td>
+                    <td class="small align-middle">{{ $u.Name }}</td>
+                    <td class="small align-middle">{{ $u.AccountTypeString }}</td>
+                    <td class="small align-middle">{{ $u.Locked }}</td>
+                    <td class="text-right">
+                        <div class="btn-group" role="group">
+                            <a href="/users/edit/{{ $u.ID }}" class="btn btn-secondary btn-sm"><i class="fas fa-edit"></i></a>
+                            <button class="btn btn-success btn-sm" type="submit" name="unlock" value="{{ $u.ID }}"><i class="fas fa-unlock"></i></button>
+                            <button class="btn btn-warning btn-sm" type="submit" name="reset" value="{{ $u.ID }}"><i class="fas fa-key"></i></button>
+                            <button class="btn btn-danger btn-sm delete-user" data-staff-id="{{ $u.ID }}"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </td>
+                </tr>
+            {{ end }}
+        </tbody>
+    </table>
+</div>
+{{ end }}

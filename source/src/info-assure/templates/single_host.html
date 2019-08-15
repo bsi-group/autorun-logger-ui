@@ -1,0 +1,67 @@
+{{ define "navbar" }}
+<a class="navbar-brand" href="#">ARL</a>
+<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavCollapse" aria-controls="navbarNavCollapse" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+</button>
+
+<div class="navbar-collapse" id="navbarNavCollapse">
+  <div class="navbar-nav">
+    <a class="nav-item nav-link" href="/alerts">Alerts</a>
+    <a class="nav-item nav-link" href="/classified">Classified</a>
+    <a class="nav-item nav-link active" href="/singlehost">Single Host</a>
+    <a class="nav-item nav-link" href="/search">Search</a>
+    <a class="nav-item nav-link" href="/export">Export</a>
+    <a class="nav-item nav-link" href="/users">Users</a>
+  </div>
+</div>
+
+<nav class="navbar-nav">
+  <li class="nav-item">
+    <a class="nav-link" href="/logout">Logout</a>
+  </li>
+</nav>
+{{ end }}
+
+{{ define "content" }}
+<form class="ui form" method="post" name="data_form" id="data_form">
+
+    <br>
+    <div class="row justify-content-md-center">
+        <div class="column">
+            <div class="form-group form-inline form-control-sm">  
+                <label for="search_host">Host</label
+                >&nbsp;
+                &nbsp;
+                <input type="text" class="form-control" name="search_host" id="search_host" value="{{ if ne .search_host "" }}{{ .search_host }}{{ end}}"/>
+                &nbsp;
+                &nbsp;
+                <button id="search" name="search" type="submit" class="btn btn-primary btn-sm">Search</button>
+            </div>
+        </div>
+    </div>
+
+    &nbsp;
+
+    {{ if .hosts }}
+    <div class="row justify-content-md-center">
+    <div class="column">
+        <div class="form-group form-inline form-control-sm">  
+            <select name="host" class="form-control" id="host">
+            {{ range $h := .hosts }}
+                <option value="{{ $h.Host }}">{{ $h.Host }}</option>
+            {{ end }}
+            </select> 
+            &nbsp;
+            &nbsp;
+            <button id="view" name="view" type="submit" class="btn btn-primary btn-sm">View</button>
+        </div>
+    </div>
+    </div>
+    {{ end }}
+
+</form>
+
+<script type="text/javascript">
+
+</script>
+{{ end }}
